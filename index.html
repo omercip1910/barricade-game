@@ -3,34 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barricade Platinum - God Mode AI</title>
+    <title>Barricade Platinum Elite</title>
     <style>
-        :root { --gold: #ff8c00; --gold-glow: #ffae42; --bg: #030303; }
-        body { background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        
-        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--gold); padding-bottom: 5px; width: 420px; }
-        #msg { color: var(--gold-glow); font-size: 1.1rem; text-shadow: 0 0 10px var(--gold); min-height: 25px; }
-
-        .scoreboard { display: flex; gap: 15px; width: 420px; margin-top: 10px; }
-        .card { flex: 1; background: #111; border: 3px solid #222; padding: 15px; border-radius: 20px; text-align: center; transition: 0.4s; }
-        .card.active { border-color: var(--gold); box-shadow: 0 0 25px var(--gold); transform: scale(1.05); }
-        .num { font-size: 2.2rem; color: var(--gold); font-weight: 900; line-height: 1; }
-        
-        .btn-group { display: flex; gap: 8px; margin: 15px 0; }
-        button { background: #111; color: var(--gold); border: 2px solid var(--gold); padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-        button.active { background: var(--gold); color: black; box-shadow: 0 0 15px var(--gold); }
-        button#b_insane { border-color: #ff0000; color: #ff0000; }
-        button#b_insane.active { background: #ff0000; color: white; box-shadow: 0 0 15px #ff0000; }
-
-        .game-area { position: relative; border: 6px solid #1a1a1a; border-radius: 25px; padding: 10px; background: #000; box-shadow: 0 0 40px rgba(0,0,0,1); }
-        canvas { background: #000; display: block; border-radius: 15px; cursor: crosshair; }
+        :root { --gold: #ff8c00; --bg: #030303; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .header { text-align: center; margin-bottom: 10px; width: 420px; }
+        #msg { color: var(--gold); font-weight: bold; font-size: 1.2rem; min-height: 30px; text-shadow: 0 0 10px black; }
+        .scoreboard { display: flex; gap: 10px; width: 420px; margin-bottom: 15px; }
+        .card { flex: 1; background: #111; border: 2px solid #222; padding: 12px; border-radius: 15px; text-align: center; }
+        .active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); transform: scale(1.02); }
+        .num { font-size: 2rem; color: var(--gold); font-weight: 900; }
+        .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
+        button { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        button.active { background: var(--gold); color: #000; }
+        .canvas-wrap { border: 4px solid var(--gold); border-radius: 20px; padding: 5px; background: #111; box-shadow: 0 0 30px rgba(255,140,0,0.15); }
+        canvas { background: #000; display: block; border-radius: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div id="msg">RAKİP: ULTRA YAPAY ZEKA</div>
-    </div>
+    <div class="header"><div id="msg">STRATEJİNİ BELİRLE</div></div>
 
     <div class="scoreboard">
         <div id="c0" class="card active"><small>SİZ</small><div class="num" id="w0">10</div></div>
@@ -43,7 +35,7 @@
         <button id="b_insane" class="active" onclick="setDiff('insane')">İMKANSIZ</button>
     </div>
 
-    <div class="game-area">
+    <div class="canvas-wrap">
         <canvas id="game" width="420" height="420"></canvas>
     </div>
 
@@ -73,43 +65,29 @@
 
     function draw() {
         ctx.fillStyle = '#000'; ctx.fillRect(0,0,420,420);
-        ctx.strokeStyle = '#151515'; ctx.lineWidth = 2;
+        ctx.strokeStyle = '#1a1a1a';
         for(let i=0; i<=GRID; i++) {
             ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
         }
-
         state.walls.forEach(w => {
-            ctx.fillStyle = '#ff8c00';
-            ctx.shadowBlur = 15; ctx.shadowColor = '#ff8c00';
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-6, w.y*CELL+4, 12, CELL-8);
-            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-6, CELL-8, 12);
+            ctx.fillStyle = '#ff8c00'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff8c00';
+            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+4, 10, CELL-8);
+            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-5, CELL-8, 10);
             ctx.shadowBlur = 0;
         });
-
         state.players.forEach((p, i) => {
             ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
             ctx.fillStyle = p.c; ctx.fill();
-            if(state.turn === i) {
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
-                ctx.shadowBlur = 20; ctx.shadowColor = p.c; ctx.stroke();
-            }
-            ctx.shadowBlur = 0;
+            if(state.turn === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke(); }
         });
-
         document.getElementById('w0').innerText = state.players[0].w;
         document.getElementById('w1').innerText = state.players[1].w;
         document.getElementById('c0').className = state.turn===0?'card active':'card';
         document.getElementById('c1').className = state.turn===1?'card active':'card';
     }
 
-    function isBlocked(x1, y1, x2, y2, walls) {
-        if(x1 === x2) return walls.some(w => w.t === 'h' && w.x === x1 && w.y === Math.min(y1, y2));
-        if(y1 === y2) return walls.some(w => w.t === 'v' && w.y === y1 && w.x === Math.min(x1, x2));
-        return false;
-    }
-
-    function getShortestPath(px, py, ty, walls) {
+    function getPathLen(px, py, ty, walls) {
         let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
         while(q.length) {
             let c = q.shift(); if(c.y === ty) return c.d;
@@ -123,12 +101,17 @@
         return 999;
     }
 
-    function placeWall(x, y, t, pIdx) {
+    function isBlocked(x1,y1,x2,y2, walls) {
+        if(x1===x2) return walls.some(w => w.t==='h' && w.x===x1 && w.y===Math.min(y1,y2));
+        return walls.some(w => w.t==='v' && w.y===y1 && w.x===Math.min(x1,x2));
+    }
+
+    function placeWall(x,y,t, pIdx) {
         if(state.players[pIdx].w <= 0) return false;
         if(state.walls.find(w=>w.x===x && w.y===y && w.t===t)) return false;
         let test = [...state.walls, {x,y,t}];
-        if(getShortestPath(state.players[0].x, state.players[0].y, 0, test) < 999 && 
-           getShortestPath(state.players[1].x, state.players[1].y, 6, test) < 999) {
+        if(getPathLen(state.players[0].x, state.players[0].y, 0, test) < 999 && 
+           getPathLen(state.players[1].x, state.players[1].y, 6, test) < 999) {
             state.walls.push({x,y,t}); state.players[pIdx].w--; return true;
         }
         return false;
@@ -136,8 +119,8 @@
 
     canvas.addEventListener('mousedown', e => {
         if(state.over || state.turn !== 0) return;
-        const r = canvas.getBoundingClientRect();
-        const x = (e.clientX-r.left)*(420/r.width), y = (e.clientY-r.top)*(420/r.height);
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX-rect.left)*(420/rect.width), y = (e.clientY-rect.top)*(420/rect.height);
         const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
 
         if(mx > 45 && cx < 6 && placeWall(cx, cy, 'v', 0)) { next(); return; }
@@ -145,42 +128,48 @@
 
         let p = state.players[0];
         if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
-            p.x=cx; p.y=cy; if(p.y===0) end("ZAFER SİZİN!"); else next();
+            p.x=cx; p.y=cy; if(p.y===0) end("KAZANDIN!"); else next();
         }
     });
 
-    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.turn===1) setTimeout(botLogic, 500); }
+    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.turn===1) setTimeout(bot, 500); }
 
-    function botLogic() {
+    function bot() {
         let b = state.players[1], p = state.players[0];
-        let pPath = getShortestPath(p.x, p.y, 0, state.walls);
-        let bPath = getShortestPath(b.x, b.y, 6, state.walls);
+        let pDist = getPathLen(p.x, p.y, 0, state.walls);
+        let bDist = getPathLen(b.x, b.y, 6, state.walls);
 
-        // --- İMKANSIZ MOD: SABOTAJ ALGORİTMASI ---
-        if(state.diff === 'insane' && b.w > 0) {
-            // Eğer oyuncunun yolu botun yolundan kısaysa veya oyuncu sona çok yakınsa ENGELLE
-            if(pPath <= bPath || p.y < 3) {
-                // Oyuncunun yolunu en çok uzatan barikatı bulmaya çalış
-                for(let ty = p.y-1; ty <= p.y; ty++) {
-                    if(ty < 0 || ty >= 6) continue;
-                    if(placeWall(p.x, ty, 'h', 1)) { next(); return; }
-                    if(p.x > 0 && placeWall(p.x-1, ty, 'h', 1)) { next(); return; }
-                }
+        // --- KOLAY MOD: Sadece yürür, %20 şansla rastgele engel koyar ---
+        if(state.diff === 'easy') {
+            if(Math.random() < 0.2 && b.w > 0) {
+                placeWall(Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.random()>0.5?'h':'v', 1);
+            }
+        } 
+        // --- ZOR MOD: Mantıklı engel koyar ama hırslı değildir ---
+        else if(state.diff === 'hard') {
+            if(b.w > 0 && pDist < 4) {
+                placeWall(p.x, p.y-1, 'h', 1);
+            }
+        }
+        // --- İMKANSIZ MOD: Oyuncuyu bitiren sabotaj ---
+        else if(state.diff === 'insane' && b.w > 0) {
+            if(pDist <= bDist || p.y < 4) {
+                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
+                if(p.x < 6 && placeWall(p.x, p.y, 'v', 1)) { next(); return; }
             }
         }
 
-        // --- AKILLI HAREKET (Dijkstra) ---
-        let bestMove = null, minD = 999;
-        for(let [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1]]) {
-            let nx=b.x+dx, ny=b.y+dy;
-            if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls)) {
-                let d = getShortestPath(nx, ny, 6, state.walls);
-                if(d < minD) { minD = d; bestMove = {x:nx, y:ny}; }
-            }
-        }
+        // --- HAREKET ALGORİTMASI ---
+        let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
+            let nx=b.x+m[0], ny=b.y+m[1];
+            return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
+        });
+        // Mod farkına göre en iyi yolu seçme hassasiyeti
+        if(state.diff === 'easy' && Math.random() < 0.4) moves.sort(() => Math.random() - 0.5);
+        else moves.sort((a,b) => getPathLen(b.x+a[0], b.y+a[1], 6, state.walls) - getPathLen(b.x+b[0], b.y+b[1], 6, state.walls));
         
-        if(bestMove) { b.x = bestMove.x; b.y = bestMove.y; }
-        if(b.y===6) end("BOT KAZANDI! TEKRAR DENE."); else next();
+        if(moves.length) { b.x+=moves[0][0]; b.y+=moves[0][1]; }
+        if(b.y===6) end("BOT KAZANDI!"); else next();
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
