@@ -3,29 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barricade Platinum Elite</title>
+    <title>Barricade Platinum Neon Edition</title>
     <style>
-        :root { --gold: #ff8c00; --bg: #030303; }
+        :root { 
+            --gold: #ff8c00; 
+            --bg: #030303;
+            --neon-green: #39ff14;
+            --neon-yellow: #fefe33;
+            --neon-red: #ff3131;
+        }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        
         .header { text-align: center; margin-bottom: 10px; width: 420px; }
-        #msg { color: var(--gold); font-weight: bold; font-size: 1.2rem; min-height: 30px; text-shadow: 0 0 10px black; }
+        #msg { font-weight: bold; font-size: 1.2rem; min-height: 30px; transition: 0.3s; }
+
         .scoreboard { display: flex; gap: 10px; width: 420px; margin-bottom: 15px; }
-        .card { flex: 1; background: #111; border: 2px solid #222; padding: 12px; border-radius: 15px; text-align: center; }
-        .active { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); transform: scale(1.02); }
-        .num { font-size: 2rem; color: var(--gold); font-weight: 900; }
-        .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
-        button { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-        button.active { background: var(--gold); color: #000; }
-        .canvas-wrap { border: 4px solid var(--gold); border-radius: 20px; padding: 5px; background: #111; box-shadow: 0 0 30px rgba(255,140,0,0.15); }
+        .card { flex: 1; background: #111; border: 2px solid #222; padding: 12px; border-radius: 15px; text-align: center; transition: 0.5s; }
+        .num { font-size: 2rem; font-weight: 900; color: white; }
+        
+        /* Buton Grubu ve Neon Renkler */
+        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        button { background: #111; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: 0.3s; border: 2px solid transparent; }
+        
+        /* Kolay - Yeşil */
+        #b_easy { color: var(--neon-green); border-color: rgba(57, 255, 20, 0.3); }
+        #b_easy.active { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); border-color: white; }
+        
+        /* Zor - Sarı */
+        #b_hard { color: var(--neon-yellow); border-color: rgba(254, 254, 51, 0.3); }
+        #b_hard.active { background: var(--neon-yellow); color: black; box-shadow: 0 0 20px var(--neon-yellow); border-color: white; }
+        
+        /* İmkansız - Kırmızı */
+        #b_insane { color: var(--neon-red); border-color: rgba(255, 49, 49, 0.3); }
+        #b_insane.active { background: var(--neon-red); color: white; box-shadow: 0 0 20px var(--neon-red); border-color: white; }
+
+        .canvas-wrap { border: 4px solid #1a1a1a; border-radius: 20px; padding: 5px; background: #111; transition: 0.5s; }
         canvas { background: #000; display: block; border-radius: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div id="msg">STRATEJİNİ BELİRLE</div></div>
+    <div class="header"><div id="msg">ZORLUK SEÇİN</div></div>
 
     <div class="scoreboard">
-        <div id="c0" class="card active"><small>SİZ</small><div class="num" id="w0">10</div></div>
+        <div id="c0" class="card"><small>SİZ</small><div class="num" id="w0">10</div></div>
         <div id="c1" class="card"><small>BOT</small><div class="num" id="w1">10</div></div>
     </div>
 
@@ -35,7 +56,7 @@
         <button id="b_insane" class="active" onclick="setDiff('insane')">İMKANSIZ</button>
     </div>
 
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" id="main-frame">
         <canvas id="game" width="420" height="420"></canvas>
     </div>
 
@@ -46,13 +67,22 @@
     
     let state = {
         turn: 0, walls: [], over: false, diff: 'insane',
-        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0}, {x:3, y:0, w:10, c:'#2e86de', ty:6}]
+        colors: { easy: '#39ff14', hard: '#fefe33', insane: '#ff3131' },
+        players: [{x:3, y:6, w:10, c:'#ffffff', ty:0}, {x:3, y:0, w:10, c:'#00e5ff', ty:6}]
     };
 
     function setDiff(d) {
         state.diff = d;
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         document.getElementById('b_'+d).classList.add('active');
+        
+        // Görsel efektleri güncelle
+        const accent = state.colors[d];
+        document.getElementById('msg').style.color = accent;
+        document.getElementById('msg').style.textShadow = `0 0 10px ${accent}`;
+        document.getElementById('main-frame').style.borderColor = accent;
+        document.getElementById('main-frame').style.boxShadow = `0 0 30px ${accent}44`;
+        
         reset();
     }
 
@@ -65,28 +95,44 @@
 
     function draw() {
         ctx.fillStyle = '#000'; ctx.fillRect(0,0,420,420);
-        ctx.strokeStyle = '#1a1a1a';
+        ctx.strokeStyle = '#151515';
         for(let i=0; i<=GRID; i++) {
             ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
         }
+        
+        const wallColor = state.colors[state.diff];
         state.walls.forEach(w => {
-            ctx.fillStyle = '#ff8c00'; ctx.shadowBlur = 15; ctx.shadowColor = '#ff8c00';
+            ctx.fillStyle = wallColor; ctx.shadowBlur = 15; ctx.shadowColor = wallColor;
             if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+4, 10, CELL-8);
             else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-5, CELL-8, 10);
             ctx.shadowBlur = 0;
         });
+
         state.players.forEach((p, i) => {
             ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
             ctx.fillStyle = p.c; ctx.fill();
-            if(state.turn === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke(); }
+            if(state.turn === i) { 
+                ctx.strokeStyle = wallColor; ctx.lineWidth = 4; ctx.stroke(); 
+                ctx.shadowBlur = 15; ctx.shadowColor = wallColor; ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
         });
+
         document.getElementById('w0').innerText = state.players[0].w;
         document.getElementById('w1').innerText = state.players[1].w;
-        document.getElementById('c0').className = state.turn===0?'card active':'card';
-        document.getElementById('c1').className = state.turn===1?'card active':'card';
+        const activeCard = document.getElementById('c'+state.turn);
+        document.querySelectorAll('.card').forEach(c => {
+            c.classList.remove('active');
+            c.style.borderColor = "#222";
+            c.style.boxShadow = "none";
+        });
+        activeCard.classList.add('active');
+        activeCard.style.borderColor = wallColor;
+        activeCard.style.boxShadow = `0 0 20px ${wallColor}`;
     }
 
+    // Algoritma Fonksiyonları (Dijkstra/Pathfinding)
     function getPathLen(px, py, ty, walls) {
         let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
         while(q.length) {
@@ -139,32 +185,21 @@
         let pDist = getPathLen(p.x, p.y, 0, state.walls);
         let bDist = getPathLen(b.x, b.y, 6, state.walls);
 
-        // --- KOLAY MOD: Sadece yürür, %20 şansla rastgele engel koyar ---
         if(state.diff === 'easy') {
-            if(Math.random() < 0.2 && b.w > 0) {
-                placeWall(Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.random()>0.5?'h':'v', 1);
-            }
-        } 
-        // --- ZOR MOD: Mantıklı engel koyar ama hırslı değildir ---
-        else if(state.diff === 'hard') {
-            if(b.w > 0 && pDist < 4) {
-                placeWall(p.x, p.y-1, 'h', 1);
-            }
-        }
-        // --- İMKANSIZ MOD: Oyuncuyu bitiren sabotaj ---
-        else if(state.diff === 'insane' && b.w > 0) {
+            if(Math.random() < 0.2 && b.w > 0) placeWall(Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.random()>0.5?'h':'v', 1);
+        } else if(state.diff === 'hard') {
+            if(b.w > 0 && pDist < 4) placeWall(p.x, p.y-1, 'h', 1);
+        } else if(state.diff === 'insane' && b.w > 0) {
             if(pDist <= bDist || p.y < 4) {
                 if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
                 if(p.x < 6 && placeWall(p.x, p.y, 'v', 1)) { next(); return; }
             }
         }
 
-        // --- HAREKET ALGORİTMASI ---
         let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
             let nx=b.x+m[0], ny=b.y+m[1];
             return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
         });
-        // Mod farkına göre en iyi yolu seçme hassasiyeti
         if(state.diff === 'easy' && Math.random() < 0.4) moves.sort(() => Math.random() - 0.5);
         else moves.sort((a,b) => getPathLen(b.x+a[0], b.y+a[1], 6, state.walls) - getPathLen(b.x+b[0], b.y+b[1], 6, state.walls));
         
@@ -173,7 +208,9 @@
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
-    draw();
+    
+    // İlk açılışta İmkansız (Kırmızı) modun efektlerini yükle
+    setDiff('insane');
 </script>
 </body>
 </html>
