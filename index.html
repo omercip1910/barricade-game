@@ -3,47 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barricade Platinum Neon Edition</title>
+    <title>Barricade Platinum Plus</title>
     <style>
         :root { 
-            --gold: #ff8c00; 
-            --bg: #030303;
-            --neon-green: #39ff14;
-            --neon-yellow: #fefe33;
-            --neon-red: #ff3131;
+            --neon-green: #39ff14; --neon-yellow: #fefe33; --neon-red: #ff3131;
+            --bg: #0a0a0c; --card-bg: rgba(255, 255, 255, 0.05);
         }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        body { 
+            background: var(--bg); color: white; font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; overflow: hidden;
+            background-image: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0c 100%);
+        }
         
-        .header { text-align: center; margin-bottom: 10px; width: 420px; }
-        #msg { font-weight: bold; font-size: 1.2rem; min-height: 30px; transition: 0.3s; }
+        .header { text-align: center; margin-bottom: 15px; }
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: 3px; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #msg { font-weight: 600; font-size: 1rem; margin-top: 5px; height: 25px; transition: 0.3s; }
 
-        .scoreboard { display: flex; gap: 10px; width: 420px; margin-bottom: 15px; }
-        .card { flex: 1; background: #111; border: 2px solid #222; padding: 12px; border-radius: 15px; text-align: center; transition: 0.5s; }
-        .num { font-size: 2rem; font-weight: 900; color: white; }
+        .scoreboard { display: flex; gap: 15px; width: 420px; margin-bottom: 20px; }
+        .card { 
+            flex: 1; background: var(--card-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 20px;
+            text-align: center; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .num { font-size: 2.2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
         
-        /* Buton Grubu ve Neon Renkler */
-        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        button { background: #111; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: 0.3s; border: 2px solid transparent; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { 
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 18px; border-radius: 12px; font-weight: bold; cursor: pointer;
+            font-size: 0.75rem; transition: 0.3s; color: #aaa;
+        }
         
-        /* Kolay - Yeşil */
-        #b_easy { color: var(--neon-green); border-color: rgba(57, 255, 20, 0.3); }
-        #b_easy.active { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); border-color: white; }
-        
-        /* Zor - Sarı */
-        #b_hard { color: var(--neon-yellow); border-color: rgba(254, 254, 51, 0.3); }
-        #b_hard.active { background: var(--neon-yellow); color: black; box-shadow: 0 0 20px var(--neon-yellow); border-color: white; }
-        
-        /* İmkansız - Kırmızı */
-        #b_insane { color: var(--neon-red); border-color: rgba(255, 49, 49, 0.3); }
-        #b_insane.active { background: var(--neon-red); color: white; box-shadow: 0 0 20px var(--neon-red); border-color: white; }
+        button.active[data-mode="easy"] { color: #000; background: var(--neon-green); box-shadow: 0 0 25px var(--neon-green); border-color: #fff; }
+        button.active[data-mode="hard"] { color: #000; background: var(--neon-yellow); box-shadow: 0 0 25px var(--neon-yellow); border-color: #fff; }
+        button.active[data-mode="insane"] { color: #fff; background: var(--neon-red); box-shadow: 0 0 25px var(--neon-red); border-color: #fff; }
 
-        .canvas-wrap { border: 4px solid #1a1a1a; border-radius: 20px; padding: 5px; background: #111; transition: 0.5s; }
-        canvas { background: #000; display: block; border-radius: 15px; }
+        .canvas-container {
+            position: relative; padding: 10px; background: rgba(255,255,255,0.02);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        canvas { display: block; border-radius: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="header"><div id="msg">ZORLUK SEÇİN</div></div>
+    <div class="header">
+        <h1>BARRICADE PLATINUM PLUS</h1>
+        <div id="msg">SİSTEM YÜKLENİYOR...</div>
+    </div>
 
     <div class="scoreboard">
         <div id="c0" class="card"><small>SİZ</small><div class="num" id="w0">10</div></div>
@@ -51,12 +60,12 @@
     </div>
 
     <div class="btn-group">
-        <button id="b_easy" onclick="setDiff('easy')">KOLAY</button>
-        <button id="b_hard" onclick="setDiff('hard')">ZOR</button>
-        <button id="b_insane" class="active" onclick="setDiff('insane')">İMKANSIZ</button>
+        <button id="b_easy" data-mode="easy" onclick="setDiff('easy')">KOLAY</button>
+        <button id="b_hard" data-mode="hard" onclick="setDiff('hard')">ZOR</button>
+        <button id="b_insane" data-mode="insane" class="active" onclick="setDiff('insane')">İMKANSIZ</button>
     </div>
 
-    <div class="canvas-wrap" id="main-frame">
+    <div class="canvas-container" id="main-wrap">
         <canvas id="game" width="420" height="420"></canvas>
     </div>
 
@@ -68,21 +77,16 @@
     let state = {
         turn: 0, walls: [], over: false, diff: 'insane',
         colors: { easy: '#39ff14', hard: '#fefe33', insane: '#ff3131' },
-        players: [{x:3, y:6, w:10, c:'#ffffff', ty:0}, {x:3, y:0, w:10, c:'#00e5ff', ty:6}]
+        players: [{x:3, y:6, w:10, c:'#fff', ty:0}, {x:3, y:0, w:10, c:'#00e5ff', ty:6}]
     };
 
     function setDiff(d) {
         state.diff = d;
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         document.getElementById('b_'+d).classList.add('active');
-        
-        // Görsel efektleri güncelle
-        const accent = state.colors[d];
-        document.getElementById('msg').style.color = accent;
-        document.getElementById('msg').style.textShadow = `0 0 10px ${accent}`;
-        document.getElementById('main-frame').style.borderColor = accent;
-        document.getElementById('main-frame').style.boxShadow = `0 0 30px ${accent}44`;
-        
+        const color = state.colors[d];
+        document.getElementById('msg').style.color = color;
+        document.getElementById('main-wrap').style.borderColor = color;
         reset();
     }
 
@@ -94,45 +98,70 @@
     }
 
     function draw() {
-        ctx.fillStyle = '#000'; ctx.fillRect(0,0,420,420);
-        ctx.strokeStyle = '#151515';
+        ctx.clearRect(0, 0, 420, 420);
+        
+        // Izgara Çizimi (Digital Grid)
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
         for(let i=0; i<=GRID; i++) {
             ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
         }
         
-        const wallColor = state.colors[state.diff];
+        const accent = state.colors[state.diff];
+        
+        // Barikatlar
         state.walls.forEach(w => {
-            ctx.fillStyle = wallColor; ctx.shadowBlur = 15; ctx.shadowColor = wallColor;
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+4, 10, CELL-8);
-            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-5, CELL-8, 10);
-            ctx.shadowBlur = 0;
-        });
-
-        state.players.forEach((p, i) => {
-            ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
-            ctx.fillStyle = p.c; ctx.fill();
-            if(state.turn === i) { 
-                ctx.strokeStyle = wallColor; ctx.lineWidth = 4; ctx.stroke(); 
-                ctx.shadowBlur = 15; ctx.shadowColor = wallColor; ctx.stroke();
+            ctx.fillStyle = accent;
+            ctx.shadowBlur = 15; ctx.shadowColor = accent;
+            if(w.t === 'v') {
+                ctx.roundRect((w.x+1)*CELL-4, w.y*CELL+6, 8, CELL-12, 4);
+            } else {
+                ctx.roundRect(w.x*CELL+6, (w.y+1)*CELL-4, CELL-12, 8, 4);
             }
+            ctx.fill(); ctx.shadowBlur = 0;
+        });
+
+        // Piyonlar
+        state.players.forEach((p, i) => {
+            const isCurrent = state.turn === i;
+            ctx.shadowBlur = isCurrent ? 20 : 0;
+            ctx.shadowColor = isCurrent ? accent : 'transparent';
+            
+            // Dış Halka
+            ctx.beginPath();
+            ctx.arc(p.x*CELL+30, p.y*CELL+30, 22, 0, Math.PI*2);
+            ctx.strokeStyle = isCurrent ? '#fff' : 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // İç Dolgu
+            ctx.beginPath();
+            ctx.arc(p.x*CELL+30, p.y*CELL+30, 15, 0, Math.PI*2);
+            ctx.fillStyle = p.c;
+            ctx.fill();
             ctx.shadowBlur = 0;
         });
 
+        // Skor Güncelleme
         document.getElementById('w0').innerText = state.players[0].w;
         document.getElementById('w1').innerText = state.players[1].w;
-        const activeCard = document.getElementById('c'+state.turn);
-        document.querySelectorAll('.card').forEach(c => {
-            c.classList.remove('active');
-            c.style.borderColor = "#222";
-            c.style.boxShadow = "none";
+        
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((c, idx) => {
+            if(state.turn === idx) {
+                c.style.borderColor = accent;
+                c.style.boxShadow = `0 0 20px ${accent}33`;
+                c.style.background = `rgba(255,255,255,0.1)`;
+            } else {
+                c.style.borderColor = "rgba(255,255,255,0.1)";
+                c.style.boxShadow = "none";
+                c.style.background = `var(--card-bg)`;
+            }
         });
-        activeCard.classList.add('active');
-        activeCard.style.borderColor = wallColor;
-        activeCard.style.boxShadow = `0 0 20px ${wallColor}`;
     }
 
-    // Algoritma Fonksiyonları (Dijkstra/Pathfinding)
+    // Pathfinding & Logic
     function getPathLen(px, py, ty, walls) {
         let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
         while(q.length) {
@@ -174,42 +203,85 @@
 
         let p = state.players[0];
         if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
-            p.x=cx; p.y=cy; if(p.y===0) end("KAZANDIN!"); else next();
+            p.x=cx; p.y=cy; if(p.y===0) end("TEBRİKLER! KAZANDINIZ."); else next();
         }
     });
 
-    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.turn===1) setTimeout(bot, 500); }
+    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.turn===1) setTimeout(botMove, 400); }
 
-    function bot() {
+    function botMove() {
         let b = state.players[1], p = state.players[0];
-        let pDist = getPathLen(p.x, p.y, 0, state.walls);
-        let bDist = getPathLen(b.x, b.y, 6, state.walls);
-
-        if(state.diff === 'easy') {
-            if(Math.random() < 0.2 && b.w > 0) placeWall(Math.floor(Math.random()*6), Math.floor(Math.random()*6), Math.random()>0.5?'h':'v', 1);
-        } else if(state.diff === 'hard') {
-            if(b.w > 0 && pDist < 4) placeWall(p.x, p.y-1, 'h', 1);
-        } else if(state.diff === 'insane' && b.w > 0) {
-            if(pDist <= bDist || p.y < 4) {
-                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
-                if(p.x < 6 && placeWall(p.x, p.y, 'v', 1)) { next(); return; }
+        
+        // --- İMKANSIZ MOD: MİNİMAX MANTIĞI ---
+        if(state.diff === 'insane' && b.w > 0) {
+            let pDist = getPathLen(p.x, p.y, 0, state.walls);
+            let bDist = getPathLen(b.x, b.y, 6, state.walls);
+            
+            // Eğer oyuncu botun önündeyse veya 3 adım kalmışsa, ACIMASIZCA ENGELLE
+            if(pDist <= bDist || p.y < 3) {
+                // Oyuncunun yolunu en çok arttıran barikat koordinatını tara
+                let bestWall = null, maxImpact = -1;
+                for(let ty = p.y-1; ty <= p.y; ty++) {
+                    if(ty<0 || ty>5) continue;
+                    let testW = {x: p.x, y: ty, t: 'h'};
+                    let impact = getPathLen(p.x, p.y, 0, [...state.walls, testW]);
+                    if(impact > pDist && impact < 999 && impact > maxImpact) {
+                        maxImpact = impact; bestWall = testW;
+                    }
+                }
+                if(bestWall && placeWall(bestWall.x, bestWall.y, bestWall.t, 1)) { next(); return; }
             }
         }
 
+        // --- ZOR MOD: STANDART ENGELLEME ---
+        if(state.diff === 'hard' && b.w > 0 && Math.random() < 0.6) {
+            if(getPathLen(p.x, p.y, 0, state.walls) < 4) {
+                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
+            }
+        }
+
+        // --- KOLAY MOD: RASTGELELİK ---
+        if(state.diff === 'easy' && Math.random() < 0.3) {
+             // Kolay modda bot bazen sadece rastgele yürür veya yanlış yöne gider
+        }
+
+        // --- EN İYİ HAREKETİ SEÇ ---
         let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
             let nx=b.x+m[0], ny=b.y+m[1];
             return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
         });
-        if(state.diff === 'easy' && Math.random() < 0.4) moves.sort(() => Math.random() - 0.5);
-        else moves.sort((a,b) => getPathLen(b.x+a[0], b.y+a[1], 6, state.walls) - getPathLen(b.x+b[0], b.y+b[1], 6, state.walls));
         
-        if(moves.length) { b.x+=moves[0][0]; b.y+=moves[0][1]; }
-        if(b.y===6) end("BOT KAZANDI!"); else next();
+        moves.sort((a,b) => {
+            let d1 = getPathLen(b.x+a[0], b.y+a[1], 6, state.walls);
+            let d2 = getPathLen(b.x+b[0], b.y+b[1], 6, state.walls);
+            return d1 - d2;
+        });
+
+        if(moves.length) {
+            b.x += moves[0][0]; b.y += moves[0][1];
+        }
+
+        if(b.y===6) end("BOT KAZANDI! PLATINUM SEVİYESİNE ÇIKMALISIN."); else next();
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
     
-    // İlk açılışta İmkansız (Kırmızı) modun efektlerini yükle
+    // Canvas roundRect Polyfill
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            this.beginPath();
+            this.moveTo(x + r, y);
+            this.arcTo(x + w, y, x + w, y + h, r);
+            this.arcTo(x + w, y + h, x, y + h, r);
+            this.arcTo(x, y + h, x, y, r);
+            this.arcTo(x, y, x + w, y, r);
+            this.closePath();
+            return this;
+        };
+    }
+
     setDiff('insane');
 </script>
 </body>
