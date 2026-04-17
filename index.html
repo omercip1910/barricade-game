@@ -23,7 +23,6 @@
         .card.active { border-color: var(--orange); box-shadow: 0 0 15px var(--orange); }
         .num { font-size: 1.6rem; color: var(--orange); font-weight: 900; }
 
-        /* Ana Menü Butonları */
         .mode-selection { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 8px; }
         .btn-main { 
             flex: 1; padding: 14px; font-size: 0.8rem; font-weight: 900; 
@@ -31,11 +30,9 @@
         }
         .btn-main.bot-mode { color: var(--orange); border-color: var(--orange); }
         .btn-main.bot-mode.active { background: var(--orange); color: #000; box-shadow: 0 0 15px var(--orange); }
-        
         .btn-main.pvp-mode { color: var(--blue); border-color: var(--blue); }
         .btn-main.pvp-mode.active { background: var(--blue); color: #000; box-shadow: 0 0 15px var(--blue); }
 
-        /* Zorluk Butonları (Sadece Bot Modunda) */
         .diff-selection { display: flex; gap: 4px; margin-bottom: 10px; }
         .btn-diff { 
             background: #111; color: #555; border: 1px solid #333; 
@@ -143,13 +140,13 @@
 
     function isBlocked(x1, y1, x2, y2, walls) {
         if(x1 === x2) return walls.some(w => w.t === 'h' && w.x === x1 && w.y === Math.min(y1, y2));
-        if(y1 === y2) return walls.some(w => w.t === 'v' && w.y === y1 && w.x === Math.min(x1, x2));
+        if(y1 === y2) return walls.some(w => w.y === y1 && w.x === Math.min(x1, x2) && w.t === 'v');
         return false;
     }
 
     function getPathLen(px, py, ty, walls) {
         let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]), iters = 0;
-        while(q.length && iters < 250) { // Çökme koruması için döngü limiti
+        while(q.length && iters < 180) { // Limit biraz daha optimize edildi
             iters++;
             let c = q.shift(); if(c.y === ty) return c.d;
             for(let [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
@@ -181,7 +178,7 @@
 
     function placeWall(x, y, t, pIdx) {
         if(state.players[pIdx].w <= 0) return false;
-        if(state.walls.find(w=>w.x===x && w.y===y && w.t===t)) return false;
+        if(state.walls.some(w=>w.x===x && w.y===y && w.t===t)) return false;
         let test = [...state.walls, {x,y,t}];
         if(getPathLen(state.players[0].x, state.players[0].y, 0, test) < 999 && 
            getPathLen(state.players[1].x, state.players[1].y, 6, test) < 999) {
@@ -208,12 +205,10 @@
             let pD = getPathLen(p.x, p.y, 0, state.walls);
             let bD = getPathLen(b.x, b.y, 6, state.walls);
 
-            // Bot Sabotaj (İmkansız/Zor Mod)
             if(state.diff !== 'easy' && b.w > 0 && (pD <= bD || p.y < 3)) {
                 if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
             }
 
-            // Bot Hareket
             let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
                 let nx=b.x+m[0], ny=b.y+m[1];
                 return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
@@ -222,7 +217,6 @@
             moves.sort((a, b_m) => {
                 let d1 = getPathLen(b.x+a[0], b.y+a[1], 6, state.walls);
                 let d2 = getPathLen(b.x+b_m[0], b.y+b_m[1], 6, state.walls);
-                // Geri gitme koruması
                 if(state.history.length > 0) {
                     let last = state.history[state.history.length-1];
                     if(b.x+a[0] === last.x && b.y+a[1] === last.y) d1 += 3;
@@ -236,14 +230,10 @@
                 b.x += moves[0][0]; b.y += moves[0][1];
             }
             if(b.y === 6) end("BOT KAZANDI!"); else next();
-        } catch(e) {
-            console.log("Bot hatası yakalandı, oyun devam ediyor.");
-            next(); // Hata olursa sırayı devret, çökme.
-        }
+        } catch(e) { next(); }
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
-    
     setMode('bot');
 </script>
 </body>
