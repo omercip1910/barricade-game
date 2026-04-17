@@ -5,108 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barricade Platinum Plus</title>
     <style>
-        :root { --orange: #ff8c00; --bg: #030303; --card: #111; }
+        :root { --orange: #ff8c00; --bg: #030303; --card: #111; --blue: #00e5ff; }
         body { 
             background: var(--bg); color: white; font-family: 'Arial Black', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0;
+            min-height: 100vh; margin: 0; padding: 10px; box-sizing: border-box; overflow: hidden;
         }
-        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--orange); width: 420px; }
-        h1 { margin: 5px; font-size: 1.2rem; color: var(--orange); letter-spacing: 2px; }
-        #msg { color: #fff; font-size: 0.9rem; min-height: 20px; text-shadow: 0 0 5px var(--orange); }
+        .header { text-align: center; margin-bottom: 5px; width: 100%; max-width: 400px; }
+        h1 { margin: 0; font-size: 1rem; color: var(--orange); letter-spacing: 2px; }
+        #msg { color: #fff; font-size: 0.8rem; min-height: 18px; margin-bottom: 5px; }
 
-        .scoreboard { display: flex; gap: 10px; width: 420px; margin: 15px 0; }
+        .scoreboard { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 10px; }
         .card { 
-            flex: 1; background: var(--card); border: 3px solid #222; padding: 10px; 
-            border-radius: 15px; text-align: center; transition: 0.3s;
+            flex: 1; background: var(--card); border: 2px solid #222; padding: 8px; 
+            border-radius: 12px; text-align: center; transition: 0.3s;
         }
-        .card.active { border-color: var(--orange); box-shadow: 0 0 20px var(--orange); }
-        .num { font-size: 2rem; color: var(--orange); }
+        .card.active { border-color: var(--orange); box-shadow: 0 0 15px var(--orange); }
+        .num { font-size: 1.6rem; color: var(--orange); font-weight: 900; }
 
-        .btn-group { display: flex; gap: 5px; margin-bottom: 10px; }
-        button { 
-            background: #111; color: var(--orange); border: 2px solid var(--orange);
-            padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.7rem;
+        /* Yeni Menü Düzeni */
+        .mode-selection { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 8px; }
+        .btn-main { 
+            flex: 1; padding: 12px; font-size: 0.85rem; font-weight: 900; 
+            background: #000; border: 3px solid #333; border-radius: 10px; cursor: pointer; transition: 0.2s;
         }
-        button.active { background: var(--orange); color: #000; box-shadow: 0 0 10px var(--orange); }
-        button.pvp { border-color: #00e5ff; color: #00e5ff; }
-        button.pvp.active { background: #00e5ff; color: #000; box-shadow: 0 0 10px #00e5ff; }
+        .btn-main.bot-mode { color: var(--orange); border-color: var(--orange); }
+        .btn-main.bot-mode.active { background: var(--orange); color: #000; box-shadow: 0 0 15px var(--orange); }
+        
+        .btn-main.pvp-mode { color: var(--blue); border-color: var(--blue); }
+        .btn-main.pvp-mode.active { background: var(--blue); color: #000; box-shadow: 0 0 15px var(--blue); }
 
-        .game-area { position: relative; border: 5px solid #1a1a1a; border-radius: 20px; padding: 5px; background: #000; }
-        canvas { display: block; border-radius: 12px; cursor: crosshair; }
+        .diff-selection { display: flex; gap: 4px; margin-bottom: 12px; }
+        .btn-diff { 
+            background: #111; color: #666; border: 1px solid #333; 
+            padding: 5px 10px; border-radius: 5px; font-size: 0.65rem; font-weight: bold; cursor: pointer;
+        }
+        .btn-diff.active { border-color: #fff; color: #fff; background: #222; }
+
+        .canvas-container { border: 3px solid #1a1a1a; border-radius: 15px; background: #000; line-height: 0; }
+        canvas { display: block; touch-action: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>BARRICADE PLATINUM PLUS</h1>
-        <div id="msg">SIRA SİZDE</div>
+        <div id="msg">BAŞLAMAK İÇİN MOD SEÇİN</div>
     </div>
 
     <div class="scoreboard">
-        <div id="c0" class="card active"><small>1. OYUNCU</small><div class="num" id="w0">10</div></div>
+        <div id="c0" class="card active"><small id="p1-label">OYUNCU 1</small><div class="num" id="w0">10</div></div>
         <div id="c1" class="card"><small id="p2-label">BOT</small><div class="num" id="w1">10</div></div>
     </div>
 
-    <div class="btn-group">
-        <button id="b_easy" onclick="setMode('easy')">KOLAY</button>
-        <button id="b_hard" onclick="setMode('hard')">ZOR</button>
-        <button id="b_insane" class="active" onclick="setMode('insane')">İMKANSIZ</button>
-        <button id="b_pvp" class="pvp" onclick="setMode('pvp')">2 KİŞİLİK</button>
+    <div class="mode-selection">
+        <button id="m_bot" class="btn-main bot-mode active" onclick="setMode('bot')">BOT İLE OYNA</button>
+        <button id="m_pvp" class="btn-main pvp-mode" onclick="setMode('pvp')">2 KİŞİLİK</button>
     </div>
 
-    <div class="game-area">
-        <canvas id="game" width="420" height="420"></canvas>
+    <div class="diff-selection" id="diff-box">
+        <button id="d_easy" class="btn-diff" onclick="setDiff('easy')">KOLAY</button>
+        <button id="d_hard" class="btn-diff" onclick="setDiff('hard')">ZOR</button>
+        <button id="d_insane" class="btn-diff active" onclick="setDiff('insane')">İMKANSIZ</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="game" width="385" height="385"></canvas>
     </div>
 
 <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-    const GRID = 7, CELL = 60;
+    const GRID = 7, CELL = 385/7;
     
     let state = {
-        turn: 0, walls: [], over: false, mode: 'insane',
-        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0}, {x:3, y:0, w:10, c:'#2e86de', ty:6}]
+        turn: 0, walls: [], over: false, mode: 'bot', diff: 'insane',
+        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0}, {x:3, y:0, w:10, c:'#2e86de', ty:6}],
+        history: [] // Botun kısır döngüye girmesini engellemek için
     };
 
     function setMode(m) {
         state.mode = m;
-        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        document.getElementById('b_'+m).classList.add('active');
-        document.getElementById('p2-label').innerText = (m === 'pvp') ? "2. OYUNCU" : "BOT";
+        document.getElementById('m_bot').classList.toggle('active', m === 'bot');
+        document.getElementById('m_pvp').classList.toggle('active', m === 'pvp');
+        document.getElementById('diff-box').style.visibility = (m === 'bot') ? 'visible' : 'hidden';
+        document.getElementById('p2-label').innerText = (m === 'pvp') ? "OYUNCU 2" : "BOT";
+        reset();
+    }
+
+    function setDiff(d) {
+        state.diff = d;
+        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+        document.getElementById('d_'+d).classList.add('active');
         reset();
     }
 
     function reset() {
         state.players[0].x=3; state.players[0].y=6; state.players[0].w=10;
         state.players[1].x=3; state.players[1].y=0; state.players[1].w=10;
-        state.walls=[]; state.turn=0; state.over=false;
-        document.getElementById('msg').innerText = "OYUN BAŞLADI"; draw();
+        state.walls=[]; state.turn=0; state.over=false; state.history=[];
+        document.getElementById('msg').innerText = "SIRA 1. OYUNCUDA"; draw();
     }
 
     function draw() {
-        ctx.fillStyle = '#000'; ctx.fillRect(0,0,420,420);
-        ctx.strokeStyle = '#151515'; ctx.lineWidth = 2;
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,385,385);
+        ctx.strokeStyle = '#151515'; ctx.lineWidth = 1;
         for(let i=0; i<=GRID; i++) {
-            ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,385); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(385,i*CELL); ctx.stroke();
         }
 
-        // Barikat Parlaması - Her Çizimde Yenilenir
         state.walls.forEach(w => {
-            ctx.shadowBlur = 15; ctx.shadowColor = '#ff8c00';
-            ctx.fillStyle = '#ff8c00';
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-6, w.y*CELL+4, 12, CELL-8);
-            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-6, CELL-8, 12);
+            ctx.shadowBlur = 8; ctx.shadowColor = '#ff8c00'; ctx.fillStyle = '#ff8c00';
+            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-4, w.y*CELL+4, 8, CELL-8);
+            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-4, CELL-8, 8);
             ctx.shadowBlur = 0;
         });
 
         state.players.forEach((p, i) => {
-            ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
+            ctx.beginPath(); ctx.arc(p.x*CELL+CELL/2, p.y*CELL+CELL/2, CELL*0.35, 0, Math.PI*2);
             ctx.fillStyle = p.c; ctx.fill();
             if(state.turn === i) {
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-                ctx.shadowBlur = 15; ctx.shadowColor = p.c; ctx.stroke();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+                ctx.shadowBlur = 12; ctx.shadowColor = p.c; ctx.stroke();
             }
             ctx.shadowBlur = 0;
         });
@@ -124,18 +145,35 @@
     }
 
     function getPathLen(px, py, ty, walls) {
-        let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
-        while(q.length) {
-            let c = q.shift(); if(c.y === ty) return c.d;
+        let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]), iters = 0;
+        while(q.length && iters < 300) { // Çökme koruması
+            iters++; let c = q.shift(); if(c.y === ty) return c.d;
             for(let [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
                 let nx=c.x+dx, ny=c.y+dy;
                 if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !vis.has(nx+','+ny) && !isBlocked(c.x,c.y,nx,ny,walls)) {
-                    vis.has(nx+','+ny); q.push({x:nx, y:ny, d:c.d+1});
+                    vis.add(nx+','+ny); q.push({x:nx, y:ny, d:c.d+1});
                 }
             }
         }
         return 999;
     }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(state.over || (state.mode === 'bot' && state.turn === 1)) return;
+        const r = canvas.getBoundingClientRect();
+        const x = (e.clientX-r.left)*(385/r.width), y = (e.clientY-r.top)*(385/r.height);
+        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
+
+        if(mx > CELL*0.8 && cx < 6 && placeWall(cx, cy, 'v', state.turn)) { next(); return; }
+        if(my > CELL*0.8 && cy < 6 && placeWall(cx, cy, 'h', state.turn)) { next(); return; }
+
+        let p = state.players[state.turn];
+        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
+            p.x=cx; p.y=cy; 
+            if(p.y === p.ty) end(state.turn === 0 ? "1. OYUNCU KAZANDI!" : "2. OYUNCU KAZANDI!");
+            else next();
+        }
+    });
 
     function placeWall(x, y, t, pIdx) {
         if(state.players[pIdx].w <= 0) return false;
@@ -148,68 +186,56 @@
         return false;
     }
 
-    canvas.addEventListener('mousedown', e => {
-        if(state.over) return;
-        const r = canvas.getBoundingClientRect();
-        const x = (e.clientX-r.left)*(420/r.width), y = (e.clientY-r.top)*(420/r.height);
-        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
-
-        // Barikat Koyma
-        if(mx > 45 && cx < 6 && placeWall(cx, cy, 'v', state.turn)) { next(); return; }
-        if(my > 45 && cy < 6 && placeWall(cx, cy, 'h', state.turn)) { next(); return; }
-
-        // Hareket Etme
-        let p = state.players[state.turn];
-        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
-            p.x=cx; p.y=cy; 
-            if(p.y === p.ty) end(state.turn === 0 ? "1. OYUNCU KAZANDI!" : "2. OYUNCU KAZANDI!");
-            else next();
-        }
-    });
-
     function next() {
-        state.turn = 1 - state.turn;
-        draw();
-        if(!state.over && state.mode !== 'pvp' && state.turn === 1) {
-            document.getElementById('msg').innerText = "BOT DÜŞÜNÜYOR...";
-            setTimeout(botLogic, 400);
-        } else {
-            document.getElementById('msg').innerText = "SIRA " + (state.turn + 1) + ". OYUNCUDA";
+        state.turn = 1 - state.turn; draw();
+        if(!state.over) {
+            if(state.mode === 'bot' && state.turn === 1) {
+                document.getElementById('msg').innerText = "BOT HAREKET EDİYOR...";
+                setTimeout(botPlay, 400);
+            } else {
+                document.getElementById('msg').innerText = "SIRA " + (state.turn + 1) + ". OYUNCUDA";
+            }
         }
     }
 
-    function botLogic() {
+    function botPlay() {
         let b = state.players[1], p = state.players[0];
         let pDist = getPathLen(p.x, p.y, 0, state.walls);
         let bDist = getPathLen(b.x, b.y, 6, state.walls);
 
-        // İMKANSIZ MOD: KRİTİK SABOTAJ
-        if(state.mode === 'insane' && b.w > 0) {
-            if(pDist <= bDist || p.y < 3) {
-                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
-                if(p.x < 6 && placeWall(p.x, p.y, 'v', 1)) { next(); return; }
-            }
+        // İMKANSIZ MOD: AKILLI BARİKAT
+        if(state.diff === 'insane' && b.w > 0 && (pDist <= bDist || p.y < 3)) {
+            if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
         }
 
-        // AKILLI HAREKET: Gelecek odaklı seçim
+        // HAREKET ANALİZİ
         let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
             let nx=b.x+m[0], ny=b.y+m[1];
             return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
         });
 
-        // Mesafeye göre sırala ama oyuncuyu sıkıştıracak yolu seç
-        moves.sort((a,b_move) => {
+        moves.sort((a, b_move) => {
             let d1 = getPathLen(b.x+a[0], b.y+a[1], 6, state.walls);
             let d2 = getPathLen(b.x+b_move[0], b.y+b_move[1], 6, state.walls);
+            // Hafıza koruması: Önceki kareye dönmeyi sevmez
+            if(state.history.length > 0) {
+                let last = state.history[state.history.length-1];
+                if(b.x+a[0] === last.x && b.y+a[1] === last.y) d1 += 2;
+            }
             return d1 - d2;
         });
 
-        if(moves.length) { b.x += moves[0][0]; b.y += moves[0][1]; }
+        if(moves.length) {
+            state.history.push({x: b.x, y: b.y});
+            if(state.history.length > 4) state.history.shift();
+            b.x += moves[0][0]; b.y += moves[0][1];
+        }
+        
         if(b.y === 6) end("BOT KAZANDI!"); else next();
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
-    draw();
+    setMode('bot');
 </script>
 </body>
 </html>
