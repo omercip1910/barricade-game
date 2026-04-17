@@ -5,66 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barricade Platinum Plus</title>
     <style>
-        :root { 
-            --n-green: #39ff14; --n-yellow: #fefe33; --n-red: #ff3131;
-            --bg: #050507;
-        }
+        :root { --orange: #ff8c00; --bg: #030303; --card: #111; }
         body { 
-            background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif;
+            background: var(--bg); color: white; font-family: 'Arial Black', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; overflow: hidden;
+            min-height: 100vh; margin: 0;
         }
-        
-        .header { text-align: center; margin-bottom: 10px; z-index: 10; }
-        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 4px; font-weight: 900; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
-        #msg { font-size: 0.9rem; margin-top: 5px; height: 20px; font-weight: bold; text-transform: uppercase; }
+        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--orange); width: 420px; }
+        h1 { margin: 5px; font-size: 1.2rem; color: var(--orange); letter-spacing: 2px; }
+        #msg { color: #fff; font-size: 0.9rem; min-height: 20px; text-shadow: 0 0 5px var(--orange); }
 
-        .scoreboard { display: flex; gap: 15px; width: 420px; margin-bottom: 15px; }
+        .scoreboard { display: flex; gap: 10px; width: 420px; margin: 15px 0; }
         .card { 
-            flex: 1; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 18px;
-            text-align: center; transition: 0.4s ease-out;
+            flex: 1; background: var(--card); border: 3px solid #222; padding: 10px; 
+            border-radius: 15px; text-align: center; transition: 0.3s;
         }
-        .num { font-size: 2rem; font-weight: 900; }
-        
-        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; }
-        button { 
-            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px 16px; border-radius: 10px; font-weight: bold; cursor: pointer;
-            font-size: 0.7rem; color: #777; transition: 0.3s;
-        }
-        
-        button.active[data-m="easy"] { background: var(--n-green); color: #000; box-shadow: 0 0 20px var(--n-green); }
-        button.active[data-m="hard"] { background: var(--n-yellow); color: #000; box-shadow: 0 0 20px var(--n-yellow); }
-        button.active[data-m="insane"] { background: var(--n-red); color: #fff; box-shadow: 0 0 20px var(--n-red); }
+        .card.active { border-color: var(--orange); box-shadow: 0 0 20px var(--orange); }
+        .num { font-size: 2rem; color: var(--orange); }
 
-        .game-box {
-            position: relative; padding: 8px; background: rgba(255,255,255,0.02);
-            border-radius: 22px; border: 1px solid rgba(255,255,255,0.05);
-            transition: border-color 0.5s;
+        .btn-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        button { 
+            background: #111; color: var(--orange); border: 2px solid var(--orange);
+            padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.7rem;
         }
-        canvas { display: block; border-radius: 14px; background: #000; }
+        button.active { background: var(--orange); color: #000; box-shadow: 0 0 10px var(--orange); }
+        button.pvp { border-color: #00e5ff; color: #00e5ff; }
+        button.pvp.active { background: #00e5ff; color: #000; box-shadow: 0 0 10px #00e5ff; }
+
+        .game-area { position: relative; border: 5px solid #1a1a1a; border-radius: 20px; padding: 5px; background: #000; }
+        canvas { display: block; border-radius: 12px; cursor: crosshair; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>BARRICADE PLATINUM PLUS</h1>
-        <div id="msg">SİSTEM ANALİZ EDİLİYOR...</div>
+        <div id="msg">SIRA SİZDE</div>
     </div>
 
     <div class="scoreboard">
-        <div id="c0" class="card">SİZ<div class="num" id="w0">10</div></div>
-        <div id="c1" class="card">BOT<div class="num" id="w1">10</div></div>
+        <div id="c0" class="card active"><small>1. OYUNCU</small><div class="num" id="w0">10</div></div>
+        <div id="c1" class="card"><small id="p2-label">BOT</small><div class="num" id="w1">10</div></div>
     </div>
 
     <div class="btn-group">
-        <button id="b_easy" data-m="easy" onclick="setDiff('easy')">KOLAY</button>
-        <button id="b_hard" data-m="hard" onclick="setDiff('hard')">ZOR</button>
-        <button id="b_insane" data-m="insane" class="active" onclick="setDiff('insane')">İMKANSIZ</button>
+        <button id="b_easy" onclick="setMode('easy')">KOLAY</button>
+        <button id="b_hard" onclick="setMode('hard')">ZOR</button>
+        <button id="b_insane" class="active" onclick="setMode('insane')">İMKANSIZ</button>
+        <button id="b_pvp" class="pvp" onclick="setMode('pvp')">2 KİŞİLİK</button>
     </div>
 
-    <div class="game-box" id="frame">
+    <div class="game-area">
         <canvas id="game" width="420" height="420"></canvas>
     </div>
 
@@ -74,17 +65,15 @@
     const GRID = 7, CELL = 60;
     
     let state = {
-        turn: 0, walls: [], over: false, diff: 'insane',
-        colors: { easy: '#39ff14', hard: '#fefe33', insane: '#ff3131' },
-        players: [{x:3, y:6, w:10, c:'#fff', ty:0}, {x:3, y:0, w:10, c:'#00f2ff', ty:6}],
-        pulse: 0
+        turn: 0, walls: [], over: false, mode: 'insane',
+        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0}, {x:3, y:0, w:10, c:'#2e86de', ty:6}]
     };
 
-    function setDiff(d) {
-        state.diff = d;
+    function setMode(m) {
+        state.mode = m;
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        document.getElementById('b_'+d).classList.add('active');
-        document.getElementById('frame').style.borderColor = state.colors[d];
+        document.getElementById('b_'+m).classList.add('active');
+        document.getElementById('p2-label').innerText = (m === 'pvp') ? "2. OYUNCU" : "BOT";
         reset();
     }
 
@@ -92,147 +81,135 @@
         state.players[0].x=3; state.players[0].y=6; state.players[0].w=10;
         state.players[1].x=3; state.players[1].y=0; state.players[1].w=10;
         state.walls=[]; state.turn=0; state.over=false;
-        document.getElementById('msg').innerText = "HAMLE BEKLENİYOR";
-        animate();
+        document.getElementById('msg').innerText = "OYUN BAŞLADI"; draw();
     }
 
     function draw() {
         ctx.fillStyle = '#000'; ctx.fillRect(0,0,420,420);
-        
-        // Siber Izgara Tasarımı
-        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.strokeStyle = '#151515'; ctx.lineWidth = 2;
         for(let i=0; i<=GRID; i++) {
             ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
         }
 
-        const accent = state.colors[state.diff];
-        state.pulse += 0.05;
-
-        // Barikatlar
+        // Barikat Parlaması - Her Çizimde Yenilenir
         state.walls.forEach(w => {
-            ctx.fillStyle = accent;
-            ctx.shadowBlur = 15; ctx.shadowColor = accent;
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+6, 10, CELL-12);
-            else ctx.fillRect(w.x*CELL+6, (w.y+1)*CELL-5, CELL-12, 10);
+            ctx.shadowBlur = 15; ctx.shadowColor = '#ff8c00';
+            ctx.fillStyle = '#ff8c00';
+            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-6, w.y*CELL+4, 12, CELL-8);
+            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-6, CELL-8, 12);
             ctx.shadowBlur = 0;
         });
 
-        // Piyonlar (Animasyonlu)
         state.players.forEach((p, i) => {
-            const active = state.turn === i;
-            const glow = active ? Math.sin(state.pulse) * 10 + 15 : 5;
-            
-            ctx.shadowBlur = glow; ctx.shadowColor = active ? accent : p.c;
-            ctx.beginPath();
-            ctx.arc(p.x*CELL+30, p.y*CELL+30, 20 + (active?Math.sin(state.pulse)*2:0), 0, Math.PI*2);
-            ctx.strokeStyle = active ? '#fff' : 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 3; ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.arc(p.x*CELL+30, p.y*CELL+30, 12, 0, Math.PI*2);
+            ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
             ctx.fillStyle = p.c; ctx.fill();
+            if(state.turn === i) {
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+                ctx.shadowBlur = 15; ctx.shadowColor = p.c; ctx.stroke();
+            }
             ctx.shadowBlur = 0;
         });
 
         document.getElementById('w0').innerText = state.players[0].w;
         document.getElementById('w1').innerText = state.players[1].w;
-        document.getElementById('msg').style.color = accent;
-        
-        const cards = document.querySelectorAll('.card');
-        cards.forEach((c, idx) => {
-            c.style.borderColor = state.turn === idx ? accent : "rgba(255,255,255,0.1)";
-            c.style.opacity = state.turn === idx ? "1" : "0.5";
-        });
+        document.getElementById('c0').className = state.turn===0?'card active':'card';
+        document.getElementById('c1').className = state.turn===1?'card active':'card';
     }
 
-    function animate() { if(!state.over) { draw(); requestAnimationFrame(animate); } }
+    function isBlocked(x1, y1, x2, y2, walls) {
+        if(x1 === x2) return walls.some(w => w.t === 'h' && w.x === x1 && w.y === Math.min(y1, y2));
+        if(y1 === y2) return walls.some(w => w.t === 'v' && w.y === y1 && w.x === Math.min(x1, x2));
+        return false;
+    }
 
-    function getPath(px, py, ty, walls) {
-        let q = [{x:px, y:py, p:[]}], vis = new Set([px+','+py]);
+    function getPathLen(px, py, ty, walls) {
+        let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
         while(q.length) {
-            let c = q.shift(); if(c.y === ty) return c.p;
+            let c = q.shift(); if(c.y === ty) return c.d;
             for(let [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
                 let nx=c.x+dx, ny=c.y+dy;
                 if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !vis.has(nx+','+ny) && !isBlocked(c.x,c.y,nx,ny,walls)) {
-                    vis.add(nx+','+ny); q.push({x:nx, y:ny, p:[...c.p, {x:nx, y:ny}]});
+                    vis.has(nx+','+ny); q.push({x:nx, y:ny, d:c.d+1});
                 }
             }
         }
-        return null;
+        return 999;
     }
 
-    function isBlocked(x1,y1,x2,y2, walls) {
-        if(x1===x2) return walls.some(w => w.t==='h' && w.x===x1 && w.y===Math.min(y1,y2));
-        return walls.some(w => w.t==='v' && w.y===y1 && w.x===Math.min(x1,x2));
-    }
-
-    function placeWall(x,y,t, pIdx) {
-        if(state.players[pIdx].w <= 0 || state.walls.find(w=>w.x===x && w.y===y && w.t===t)) return false;
+    function placeWall(x, y, t, pIdx) {
+        if(state.players[pIdx].w <= 0) return false;
+        if(state.walls.find(w=>w.x===x && w.y===y && w.t===t)) return false;
         let test = [...state.walls, {x,y,t}];
-        if(getPath(state.players[0].x, state.players[0].y, 0, test) && getPath(state.players[1].x, state.players[1].y, 6, test)) {
+        if(getPathLen(state.players[0].x, state.players[0].y, 0, test) < 999 && 
+           getPathLen(state.players[1].x, state.players[1].y, 6, test) < 999) {
             state.walls.push({x,y,t}); state.players[pIdx].w--; return true;
         }
         return false;
     }
 
     canvas.addEventListener('mousedown', e => {
-        if(state.over || state.turn !== 0) return;
+        if(state.over) return;
         const r = canvas.getBoundingClientRect();
         const x = (e.clientX-r.left)*(420/r.width), y = (e.clientY-r.top)*(420/r.height);
         const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
 
-        if(mx > 45 && cx < 6 && placeWall(cx, cy, 'v', 0)) { next(); return; }
-        if(my > 45 && cy < 6 && placeWall(cx, cy, 'h', 0)) { next(); return; }
+        // Barikat Koyma
+        if(mx > 45 && cx < 6 && placeWall(cx, cy, 'v', state.turn)) { next(); return; }
+        if(my > 45 && cy < 6 && placeWall(cx, cy, 'h', state.turn)) { next(); return; }
 
-        let p = state.players[0];
+        // Hareket Etme
+        let p = state.players[state.turn];
         if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
-            p.x=cx; p.y=cy; if(p.y===0) end("KAZANDIN"); else next();
+            p.x=cx; p.y=cy; 
+            if(p.y === p.ty) end(state.turn === 0 ? "1. OYUNCU KAZANDI!" : "2. OYUNCU KAZANDI!");
+            else next();
         }
     });
 
-    function next() { 
-        if(state.over) return;
-        state.turn = 1-state.turn; 
-        if(state.turn===1) setTimeout(botBrain, 400); 
+    function next() {
+        state.turn = 1 - state.turn;
+        draw();
+        if(!state.over && state.mode !== 'pvp' && state.turn === 1) {
+            document.getElementById('msg').innerText = "BOT DÜŞÜNÜYOR...";
+            setTimeout(botLogic, 400);
+        } else {
+            document.getElementById('msg').innerText = "SIRA " + (state.turn + 1) + ". OYUNCUDA";
+        }
     }
 
-    function botBrain() {
+    function botLogic() {
         let b = state.players[1], p = state.players[0];
-        let pPath = getPath(p.x, p.y, 0, state.walls) || [];
-        let bPath = getPath(b.x, b.y, 6, state.walls) || [];
+        let pDist = getPathLen(p.x, p.y, 0, state.walls);
+        let bDist = getPathLen(b.x, b.y, 6, state.walls);
 
-        // --- İMKANSIZ MOD: KRİTİK ANALİZ ---
-        if(state.diff === 'insane' && b.w > 0) {
-            // Sadece yolu kesme, piyonun gidebileceği EN KRİTİK noktayı engelle
-            if(pPath.length <= bPath.length || p.y < 3) {
-                for(let node of pPath) {
-                    if(placeWall(node.x, node.y - 1, 'h', 1)) { next(); return; }
-                    if(placeWall(node.x, node.y, 'v', 1)) { next(); return; }
-                }
+        // İMKANSIZ MOD: KRİTİK SABOTAJ
+        if(state.mode === 'insane' && b.w > 0) {
+            if(pDist <= bDist || p.y < 3) {
+                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
+                if(p.x < 6 && placeWall(p.x, p.y, 'v', 1)) { next(); return; }
             }
         }
 
-        // --- HAREKET MANTIĞI (Barikat bitse bile en iyi kareye) ---
-        if(bPath.length > 0) {
-            b.x = bPath[0].x; b.y = bPath[0].y;
-        } else {
-            // Yol tamamen kapalıysa (teknik olarak imkansız ama önlem), rakibe yaklaşmayı dene
-            let dirs = [[0,1],[1,0],[-1,0],[0,-1]];
-            for(let [dx,dy] of dirs) {
-                let nx=b.x+dx, ny=b.y+dy;
-                if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls)) {
-                    b.x=nx; b.y=ny; break;
-                }
-            }
-        }
+        // AKILLI HAREKET: Gelecek odaklı seçim
+        let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
+            let nx=b.x+m[0], ny=b.y+m[1];
+            return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
+        });
 
-        if(b.y===6) end("BOT KAZANDI"); else next();
+        // Mesafeye göre sırala ama oyuncuyu sıkıştıracak yolu seç
+        moves.sort((a,b_move) => {
+            let d1 = getPathLen(b.x+a[0], b.y+a[1], 6, state.walls);
+            let d2 = getPathLen(b.x+b_move[0], b.y+b_move[1], 6, state.walls);
+            return d1 - d2;
+        });
+
+        if(moves.length) { b.x += moves[0][0]; b.y += moves[0][1]; }
+        if(b.y === 6) end("BOT KAZANDI!"); else next();
     }
 
     function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
-    
-    setDiff('insane');
+    draw();
 </script>
 </body>
 </html>
