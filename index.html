@@ -3,174 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Barricade Elite | Full Mobile</title>
+    <title>Barricade Platinum Plus</title>
     <style>
-        :root { --bg: #0d0d0d; --red: #ff4757; --blue: #2e86de; --gold: #ff8c00; }
+        :root { --bg: #050505; --red: #ff4757; --blue: #2e86de; --gold: #ff8c00; --gold-glow: #ffae42; }
         * { touch-action: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background: var(--bg); color: white; font-family: 'Arial Rounded MT Bold', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 10px; }
         
-        body { 
-            background: var(--bg); 
-            color: white; 
-            font-family: sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            min-height: 100vh;
-            padding: 10px;
-        }
-        
-        /* NAVBAR - EKRAN GENİŞLİĞİNE TAM UYUM */
-        .navbar { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .navbar { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px; position: relative; }
         .scoreboard { display: flex; gap: 8px; }
-        .card { flex: 1; background: #1a1a1a; padding: 12px; border-radius: 12px; text-align: center; border: 2px solid #333; }
-        .card.active-0 { border-color: var(--red); box-shadow: 0 0 15px rgba(255, 71, 87, 0.3); }
-        .card.active-1 { border-color: var(--blue); box-shadow: 0 0 15px rgba(46, 134, 222, 0.3); }
+        .card { flex: 1; background: #111; padding: 10px; border-radius: 12px; text-align: center; border: 2px solid #222; transition: 0.3s; }
+        .active-turn { border-color: var(--gold) !important; box-shadow: 0 0 15px var(--gold); }
         
-        .num { font-size: 1.6rem; font-weight: 800; display: block; line-height: 1; }
-        .label { font-size: 0.7rem; color: #888; text-transform: uppercase; margin-top: 4px; display: block; }
+        .num { font-size: 1.6rem; font-weight: 900; display: block; color: var(--gold); }
+        .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
 
-        .btn-group { display: flex; gap: 4px; width: 100%; }
-        button { 
-            background: #222; color: #fff; border: 1px solid #444; 
-            padding: 14px 5px; border-radius: 8px; font-size: 0.75rem; 
-            font-weight: bold; flex: 1; transition: 0.2s;
-        }
-        button.active { background: var(--gold); color: black; border-color: var(--gold); }
+        .btn-group { display: flex; gap: 4px; width: 100%; flex-wrap: wrap; }
+        button { background: #1a1a1a; color: #eee; border: 1px solid var(--gold); padding: 8px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; flex: 1; min-width: 80px; }
+        button.active { background: var(--gold); color: black; box-shadow: 0 0 10px var(--gold); }
 
-        /* OYUN ALANI - MAXİMUM BOYUT */
-        .canvas-container { 
-            position: relative; 
-            width: 98vw; /* Ekranın %98'ini kapla */
-            max-width: 450px; 
-            aspect-ratio: 1/1; 
-            background: #1a1a1a; 
-            border-radius: 15px; 
-            padding: 6px; 
-            border: 1px solid #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        canvas { width: 100%; height: 100%; background: #000; border-radius: 10px; display: block; }
-        
-        #msg { height: 30px; color: var(--gold); font-weight: bold; margin: 5px 0; font-size: 1.1rem; text-align: center; }
-        .reset-link { margin-top: 15px; color: #555; font-size: 0.85rem; padding: 10px; text-decoration: underline; }
+        #help-btn { position: absolute; right: 0; top: -45px; background: var(--gold); color: black; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 0 10px var(--gold); }
+
+        #msg { height: 35px; color: var(--gold-glow); font-weight: bold; font-size: 1.1rem; text-align: center; margin-top: 5px; text-shadow: 0 0 8px var(--gold); }
+
+        .canvas-container { position: relative; width: 98vw; max-width: 420px; aspect-ratio: 1/1; background: #111; border-radius: 20px; padding: 8px; border: 3px solid var(--gold); box-shadow: 0 0 25px rgba(255, 140, 0, 0.2); }
+        canvas { width: 100%; height: 100%; background: #000; border-radius: 12px; display: block; }
+
+        #rules-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; padding: 25px; align-items: center; justify-content: center; }
+        .rules-content { background: #111; padding: 25px; border-radius: 20px; border: 2px solid var(--gold); max-width: 400px; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
+        <div id="help-btn" onclick="toggleRules(true)">?</div>
         <div class="scoreboard">
-            <div id="c0" class="card">
-                <span id="w0" class="num" style="color:var(--red)">10</span>
-                <span class="label" style="color:var(--red)">KIRMIZI</span>
-            </div>
-            <div id="c1" class="card">
-                <span id="w1" class="num" style="color:var(--blue)">10</span>
-                <span id="n1" class="label" style="color:var(--blue)">BOT</span>
-            </div>
+            <div id="c0" class="card active-turn"><span id="w0" class="num">10</span><span class="label" style="color:var(--red)">OYUNCU</span></div>
+            <div id="c1" class="card"><span id="w1" class="num">10</span><span id="n1" class="label" style="color:var(--blue)">BOT</span></div>
         </div>
         <div class="btn-group">
-            <button id="pve" class="active" onclick="setMode('pve')">BOTA KARŞI</button>
-            <button id="pvp" onclick="setMode('pvp')">2 KİŞİ</button>
-        </div>
-        <div id="diffs" class="btn-group">
-            <button onclick="setDiff('easy')">KOLAY</button>
-            <button id="def-diff" class="active" onclick="setDiff('medium')">ORTA</button>
-            <button onclick="setDiff('hard')">ZOR</button>
-            <button onclick="setDiff('impossible')">İMKANSIZ</button>
+            <button id="m_easy" onclick="setDiff('easy')">KOLAY</button>
+            <button id="m_med" class="active" onclick="setDiff('med')">ORTA</button>
+            <button id="m_hard" onclick="setDiff('hard')">ZOR</button>
+            <button id="m_insane" onclick="setDiff('insane')" style="border-color: red; color: red;">İMKANSIZ</button>
         </div>
     </div>
 
     <div id="msg"></div>
 
-    <div class="canvas-container">
-        <canvas id="game" width="420" height="420"></canvas>
+    <div class="canvas-container"><canvas id="game" width="420" height="420"></canvas></div>
+
+    <div id="rules-overlay">
+        <div class="rules-content">
+            <h2 style="color:var(--gold)">📜 PLATINUM KURALLARI</h2>
+            <ul style="text-align:left; line-height:1.5">
+                <li><b>Hapis Yasak:</b> Rakibi tamamen kilitleyemezsin!</li>
+                <li><b>Hamle:</b> 1 Kare ilerle VEYA 1 Barikat koy.</li>
+                <li><b>İmkansız Mod:</b> Bot artık en kısa yolunu hesaplıyor ve seni durdurmak için pusu kuruyor!</li>
+            </ul>
+            <button onclick="toggleRules(false)" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:10px; font-weight:bold; margin-top:10px">ANLADIM</button>
+        </div>
     </div>
 
-    <div class="reset-link" onclick="location.reload()">OYUNU YENİDEN BAŞLAT</div>
-
 <script>
-    // Oyun mantığı aynı kalıyor, görsel iyileştirmeler eklendi
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const GRID = 7, CELL = 60;
-    let state = { players: [{x:3,y:6,w:10,c:'#ff4757'},{x:3,y:0,w:10,c:'#2e86de'}], turn: 0, walls: [], mode: 'pve', diff: 'medium', over: false };
+    let state = { players: [{x:3,y:6,w:10,c:'#ff4757'},{x:3,y:0,w:10,c:'#2e86de'}], turn: 0, walls: [], diff: 'med', over: false };
 
-    window.setMode = (m) => { state.mode = m; document.getElementById('pve').className = m==='pve'?'active':''; document.getElementById('pvp').className = m==='pvp'?'active':''; document.getElementById('n1').innerText = m==='pvp'?'MAVİ':'BOT'; document.getElementById('diffs').style.display = m==='pvp'?'none':'flex'; reset(); };
-    window.setDiff = (d) => { state.diff = d; document.querySelectorAll('#diffs button').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); reset(); };
+    function toggleRules(s) { document.getElementById('rules-overlay').style.display = s ? 'flex' : 'none'; }
+    
+    function setDiff(d) {
+        state.diff = d;
+        ['easy','med','hard','insane'].forEach(id => document.getElementById('m_'+id).className = (id===d?'active':''));
+        reset();
+    }
 
     function draw() {
         ctx.fillStyle = "#000"; ctx.fillRect(0,0,420,420);
-        ctx.strokeStyle = "#1a1a1a";
+        ctx.strokeStyle = "#222"; 
         for(let i=0; i<=GRID; i++) {
             ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,420); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(420,i*CELL); ctx.stroke();
         }
         state.walls.forEach(w => {
-            ctx.fillStyle = "#ff8c00";
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+2, 10, CELL-4);
-            else ctx.fillRect(w.x*CELL+2, (w.y+1)*CELL-5, CELL-4, 10);
+            ctx.shadowBlur = 12; ctx.shadowColor = var(--gold);
+            ctx.fillStyle = var(--gold);
+            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-5, w.y*CELL+3, 10, CELL-6);
+            else ctx.fillRect(w.x*CELL+3, (w.y+1)*CELL-5, CELL-6, 10);
+            ctx.shadowBlur = 0;
         });
         state.players.forEach((p, i) => {
             ctx.beginPath(); ctx.arc(p.x*CELL+30, p.y*CELL+30, 24, 0, Math.PI*2);
-            ctx.fillStyle = p.c; ctx.shadowBlur = 10; ctx.shadowColor = p.c;
-            ctx.fill(); ctx.shadowBlur = 0;
-            if(state.turn === i) { ctx.strokeStyle = "white"; ctx.lineWidth = 3; ctx.stroke(); }
+            ctx.fillStyle = p.c; ctx.fill();
+            if(state.turn === i) { ctx.strokeStyle = "white"; ctx.lineWidth = 4; ctx.stroke(); }
         });
         document.getElementById('w0').innerText = state.players[0].w;
         document.getElementById('w1').innerText = state.players[1].w;
-        document.getElementById('c0').className = `card ${state.turn===0?'active-0':''}`;
-        document.getElementById('c1').className = `card ${state.turn===1?'active-1':''}`;
+        document.getElementById('c0').className = `card ${state.turn===0?'active-turn':''}`;
+        document.getElementById('c1').className = `card ${state.turn===1?'active-turn':''}`;
+    }
+
+    function hasPath(px, py, targetY, walls) {
+        let q = [{x:px, y:py}], vis = new Set([`${px},${py}`]);
+        while(q.length) {
+            let c = q.shift(); if(c.y === targetY) return true;
+            [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dx,dy]) => {
+                let nx = c.x+dx, ny = c.y+dy;
+                if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !vis.has(`${nx},${ny}`)) {
+                    if(!isBlocked(c.x, c.y, nx, ny, walls)) { vis.add(`${nx},${ny}`); q.push({x:nx, y:ny}); }
+                }
+            });
+        }
+        return false;
+    }
+
+    function isBlocked(x1,y1,x2,y2, walls) {
+        if(x1===x2) return walls.some(w=>w.t==='h' && w.x===x1 && w.y===Math.min(y1,y2));
+        return walls.some(w=>w.t==='v' && w.y===y1 && w.x===Math.min(x1,x2));
     }
 
     function handleInput(e) {
-        if(state.over || (state.mode==='pve' && state.turn===1)) return;
+        if(state.over || state.turn===1) return;
         const r = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const x = (clientX - r.left) * (420 / r.width);
-        const y = (clientY - r.top) * (420 / r.height);
-        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL);
-        const mx = x % CELL, my = y % CELL;
+        const x = (clientX - r.left) * (420/r.width), y = (clientY - r.top) * (420/r.height);
+        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
 
-        const tol = 16;
-        if(state.players[state.turn].w > 0) {
-            if (mx > CELL - tol && cx < GRID - 1) { placeWall(cx, cy, 'v'); return; }
-            if (my > CELL - tol && cy < GRID - 1) { placeWall(cx, cy, 'h'); return; }
-        }
+        if(mx > 45 && cx < 6 && state.players[0].w > 0) { tryWall(cx, cy, 'v'); return; }
+        if(my > 45 && cy < 6 && state.players[0].w > 0) { tryWall(cx, cy, 'h'); return; }
 
-        let p = state.players[state.turn];
-        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isB(p.x,p.y,cx,cy)) {
+        let p = state.players[0];
+        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy, state.walls)) {
             p.x = cx; p.y = cy;
-            if(p.y===(state.turn===0?0:6)) { state.over=true; document.getElementById('msg').innerText = "TEBRİKLER, KAZANDIN!"; }
+            if(p.y===0) { state.over=true; document.getElementById('msg').innerText = "🏆 ŞAMPİYON SENSİN!"; }
             next();
         }
     }
 
-    canvas.addEventListener('mousedown', handleInput);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); }, {passive: false});
-
-    function isB(x1,y1,x2,y2) {
-        if(x1===x2) return state.walls.some(w=>w.t==='h' && w.x===x1 && w.y===Math.min(y1,y2));
-        return state.walls.some(w=>w.t==='v' && w.y===y1 && w.x===Math.min(x1,x2));
-    }
-    function placeWall(wx, wy, t) {
-        if(!state.walls.find(w => w.x===wx && w.y===wy && w.t===t)) {
-            state.walls.push({x:wx, y:wy, t:t});
-            state.players[state.turn].w--; next();
+    function tryWall(x,y,t) {
+        if(state.walls.find(w=>w.x===x && w.y===y && w.t===t)) return;
+        let tw = [...state.walls, {x,y,t}];
+        if(!hasPath(state.players[0].x, state.players[0].y, 0, tw) || !hasPath(state.players[1].x, state.players[1].y, 6, tw)) {
+            document.getElementById('msg').innerText = "🚫 HAPSETMEK YASAK!"; return;
         }
+        state.walls.push({x,y,t}); state.players[0].w--; next();
     }
-    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.mode==='pve' && state.turn===1) setTimeout(bot, 600); }
-    function bot() { 
-        let b = state.players[1];
-        if(!isB(b.x,b.y,b.x,b.y+1) && b.y < 6) b.y++; 
-        else if(b.x < 6 && !isB(b.x,b.y,b.x+1,b.y)) b.x++;
-        else if(b.x > 0) b.x--;
-        if(b.y===6) { state.over=true; document.getElementById('msg').innerText = "BOT KAZANDI!"; }
-        next(); 
+
+    function next() { state.turn = 1-state.turn; draw(); if(!state.over && state.turn===1) setTimeout(botMove, 600); }
+
+    function botMove() {
+        let b = state.players[1], p = state.players[0];
+        // İMKANSIZ MOD: En iyi hamleyi bul (Basit BFS ile yol takibi)
+        if(state.diff === 'insane' || state.diff === 'hard') {
+            // Eğer oyuncu hedefe çok yakınsa engel koy
+            if(p.y < 3 && b.w > 0 && Math.random() > 0.3) {
+                let tw = {x: p.x, y: p.y, t: 'h'};
+                if(!state.walls.find(w=>w.x===tw.x && w.y===tw.y && w.t==='h') && hasPath(p.x, p.y, 0, [...state.walls, tw])) {
+                    state.walls.push(tw); b.w--; next(); return;
+                }
+            }
+        }
+        // Temel hareket: Hedefe (y=6) yaklaş
+        if(!isBlocked(b.x,b.y,b.x,b.y+1, state.walls) && b.y < 6) b.y++;
+        else if(b.x < 6 && !isBlocked(b.x,b.y,b.x+1,b.y, state.walls)) b.x++;
+        else if(b.x > 0 && !isBlocked(b.x,b.y,b.x-1,b.y, state.walls)) b.x--;
+        else b.y--;
+
+        if(b.y===6) { state.over=true; document.getElementById('msg').innerText = "💀 BOT KAZANDI!"; }
+        next();
     }
+
     function reset() { state.players[0].x=3; state.players[0].y=6; state.players[1].x=3; state.players[1].y=0; state.players[0].w=10; state.players[1].w=10; state.walls=[]; state.turn=0; state.over=false; document.getElementById('msg').innerText=""; draw(); }
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(e); }, {passive:false});
+    canvas.addEventListener('mousedown', handleInput);
     draw();
 </script>
 </body>
