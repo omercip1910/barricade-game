@@ -22,6 +22,7 @@
         }
         .card.active { border-color: var(--orange); box-shadow: 0 0 15px var(--orange); }
         .num { font-size: 1.6rem; color: var(--orange); font-weight: 900; }
+        .timer { font-size: 0.8rem; color: #fff; margin-top: 5px; font-family: monospace; }
 
         .mode-selection { display: flex; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 8px; }
         .btn-main { 
@@ -42,18 +43,76 @@
 
         .canvas-container { border: 3px solid #1a1a1a; border-radius: 15px; background: #000; position: relative; }
         canvas { display: block; touch-action: none; border-radius: 12px; }
+
+        /* MODAL TASARIMI */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-box {
+            background: #000; border: 3px solid var(--orange); border-radius: 20px;
+            padding: 25px; width: 300px; text-align: center; box-shadow: 0 0 25px var(--orange);
+        }
+        .neon-input {
+            background: #111; border: 1px solid var(--orange); color: white;
+            padding: 12px; border-radius: 8px; width: 90%; outline: none;
+            font-weight: bold; text-align: center; margin: 15px 0; font-size: 1rem;
+        }
+        .id-display { font-size: 0.75rem; color: #888; margin-bottom: 15px; }
+        .btn-action {
+            background: var(--orange); color: black; border: none; padding: 12px 25px; 
+            border-radius: 10px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 10px;
+        }
+        .btn-create {
+            position: fixed; right: 20px; bottom: 20px; background: #000; border: 2px solid var(--orange);
+            color: var(--orange); padding: 10px 15px; border-radius: 50px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 0 10px var(--orange); font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
 
+    <div id="login-screen" class="modal-overlay">
+        <div class="modal-box">
+            <h1 style="font-size: 1.2rem;">PROFİL OLUŞTUR</h1>
+            <input type="text" id="user-name-input" class="neon-input" placeholder="İsim (Harf ve Sayı)" maxlength="14">
+            <div class="id-display">SİZİN ID: <span id="display-my-id" style="color:white">---</span></div>
+            <button class="btn-action" onclick="savePlayerProfile()">KAYDET VE GİRİŞ YAP</button>
+        </div>
+    </div>
+
+    <div id="room-screen" class="modal-overlay" style="display:none">
+        <div class="modal-box">
+            <h1 style="font-size: 1.1rem;">ODA AYARLARI</h1>
+            <input type="text" id="target-room-id" class="neon-input" placeholder="Oda Sahibi ID Gir">
+            <label style="font-size:0.8rem; color:var(--orange)">SÜRE MODU</label>
+            <select id="time-limit" class="neon-input">
+                <option value="0">ZAMANSIZ</option>
+                <option value="60">1 DAKİKA</option>
+                <option value="180">3 DAKİKA</option>
+                <option value="300">5 DAKİKA</option>
+            </select>
+            <button class="btn-action" onclick="startOnlineRoom()">ODAYI BAŞLAT</button>
+            <button class="btn-action" style="background:#333; color:white" onclick="toggleRoomModal(false)">İPTAL</button>
+        </div>
+    </div>
+
     <div class="header">
         <h1>BARRICADE PLATINUM PLUS</h1>
-        <div id="msg">YÜKLENİYOR...</div>
+        <div id="msg">SİSTEM HAZIR</div>
     </div>
 
     <div class="scoreboard">
-        <div id="c0" class="card active"><small>SİZ</small><div class="num" id="w0">10</div></div>
-        <div id="c1" class="card"><small id="p2-label">BOT</small><div class="num" id="w1">10</div></div>
+        <div id="c0" class="card active">
+            <small id="name-p1">OYUNCU 1</small>
+            <div class="num" id="w0">10</div>
+            <div class="timer" id="t0">--:--</div>
+        </div>
+        <div id="c1" class="card">
+            <small id="p2-label">BOT</small>
+            <div class="num" id="w1">10</div>
+            <div class="timer" id="t1">--:--</div>
+        </div>
     </div>
 
     <div class="mode-selection">
@@ -71,6 +130,8 @@
         <canvas id="game" width="350" height="350"></canvas>
     </div>
 
+    <button class="btn-create" onclick="toggleRoomModal(true)">CREATE ROOM</button>
+
 <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -78,10 +139,56 @@
     
     let state = {
         turn: 0, walls: [], over: false, mode: 'bot', diff: 'insane',
-        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0}, {x:3, y:0, w:10, c:'#2e86de', ty:6}],
-        history: []
+        players: [{x:3, y:6, w:10, c:'#ff4757', ty:0, time: 0}, {x:3, y:0, w:10, c:'#2e86de', ty:6, time: 0}],
+        history: [], timerInterval: null
     };
 
+    // --- PROFİL VE ID SİSTEMİ ---
+    function initProfile() {
+        let myId = localStorage.getItem('barricade_id');
+        if(!myId) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            myId = '';
+            for(let i=0; i<9; i++) myId += chars.charAt(Math.floor(Math.random() * chars.length));
+            localStorage.setItem('barricade_id', myId);
+        }
+        document.getElementById('display-my-id').innerText = myId;
+        
+        let savedName = localStorage.getItem('barricade_name');
+        if(savedName) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('name-p1').innerText = savedName.toUpperCase();
+        }
+    }
+
+    function savePlayerProfile() {
+        const input = document.getElementById('user-name-input').value;
+        const hasLetter = /[a-zA-Z]/.test(input);
+        const onlyAlphanumeric = /^[a-zA-Z0-9]+$/.test(input);
+
+        if(input.length >= 1 && input.length <= 14 && hasLetter && onlyAlphanumeric) {
+            localStorage.setItem('barricade_name', input);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('name-p1').innerText = input.toUpperCase();
+        } else {
+            alert("HATA: İsim 1-14 karakter olmalı, sadece harf/sayı içermeli ve en az 1 harf bulundurmalıdır!");
+        }
+    }
+
+    function toggleRoomModal(show) {
+        document.getElementById('room-screen').style.display = show ? 'flex' : 'none';
+    }
+
+    function startOnlineRoom() {
+        const timeVal = parseInt(document.getElementById('time-limit').value);
+        state.players[0].time = timeVal;
+        state.players[1].time = timeVal;
+        toggleRoomModal(false);
+        reset();
+        if(timeVal > 0) startTimer();
+    }
+
+    // --- OYUN MANTIĞI ---
     function setMode(m) {
         state.mode = m;
         document.getElementById('m_bot').className = 'btn-main bot-mode' + (m==='bot'?' active':'');
@@ -99,142 +206,40 @@
     }
 
     function reset() {
+        clearInterval(state.timerInterval);
         state.players[0].x=3; state.players[0].y=6; state.players[0].w=10;
         state.players[1].x=3; state.players[1].y=0; state.players[1].w=10;
         state.walls=[]; state.turn=0; state.over=false; state.history=[];
         document.getElementById('msg').innerText = "SIRA 1. OYUNCUDA";
+        updateTimerDisplay();
         draw();
     }
 
-    function draw() {
-        ctx.fillStyle = '#000'; ctx.fillRect(0,0,350,350);
-        ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
-        for(let i=0; i<=GRID; i++) {
-            ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,350); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(350,i*CELL); ctx.stroke();
-        }
-
-        state.walls.forEach(w => {
-            ctx.shadowBlur = 10; ctx.shadowColor = '#ff8c00';
-            ctx.fillStyle = '#ff8c00';
-            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-4, w.y*CELL+4, 8, CELL-8);
-            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-4, CELL-8, 8);
-            ctx.shadowBlur = 0;
-        });
-
-        state.players.forEach((p, i) => {
-            ctx.beginPath(); ctx.arc(p.x*CELL+CELL/2, p.y*CELL+CELL/2, CELL*0.35, 0, Math.PI*2);
-            ctx.fillStyle = p.c; ctx.fill();
-            if(state.turn === i) {
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
-                ctx.shadowBlur = 10; ctx.shadowColor = p.c; ctx.stroke();
-            }
-            ctx.shadowBlur = 0;
-        });
-
-        document.getElementById('w0').innerText = state.players[0].w;
-        document.getElementById('w1').innerText = state.players[1].w;
-        document.getElementById('c0').className = state.turn===0?'card active':'card';
-        document.getElementById('c1').className = state.turn===1?'card active':'card';
-    }
-
-    function isBlocked(x1, y1, x2, y2, walls) {
-        if(x1 === x2) return walls.some(w => w.t === 'h' && w.x === x1 && w.y === Math.min(y1, y2));
-        if(y1 === y2) return walls.some(w => w.y === y1 && w.x === Math.min(x1, x2) && w.t === 'v');
-        return false;
-    }
-
-    function getPathLen(px, py, ty, walls) {
-        let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]), iters = 0;
-        while(q.length && iters < 180) { // Limit biraz daha optimize edildi
-            iters++;
-            let c = q.shift(); if(c.y === ty) return c.d;
-            for(let [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                let nx=c.x+dx, ny=c.y+dy;
-                if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !vis.has(nx+','+ny) && !isBlocked(c.x,c.y,nx,ny,walls)) {
-                    vis.add(nx+','+ny); q.push({x:nx, y:ny, d:c.d+1});
+    function startTimer() {
+        clearInterval(state.timerInterval);
+        state.timerInterval = setInterval(() => {
+            if(!state.over) {
+                state.players[state.turn].time--;
+                if(state.players[state.turn].time <= 0) {
+                    calculateWinnerByRules("SÜRE BİTTİ!");
                 }
+                updateTimerDisplay();
             }
-        }
-        return 999;
+        }, 1000);
     }
 
-    canvas.addEventListener('mousedown', (e) => {
-        if(state.over || (state.mode === 'bot' && state.turn === 1)) return;
-        const r = canvas.getBoundingClientRect();
-        const x = (e.clientX-r.left)*(350/r.width), y = (e.clientY-r.top)*(350/r.height);
-        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
-
-        if(mx > CELL*0.8 && cx < 6 && placeWall(cx, cy, 'v', state.turn)) { next(); return; }
-        if(my > CELL*0.8 && cy < 6 && placeWall(cx, cy, 'h', state.turn)) { next(); return; }
-
-        let p = state.players[state.turn];
-        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
-            p.x=cx; p.y=cy; 
-            if(p.y === p.ty) end((state.turn+1) + ". OYUNCU KAZANDI!");
-            else next();
-        }
-    });
-
-    function placeWall(x, y, t, pIdx) {
-        if(state.players[pIdx].w <= 0) return false;
-        if(state.walls.some(w=>w.x===x && w.y===y && w.t===t)) return false;
-        let test = [...state.walls, {x,y,t}];
-        if(getPathLen(state.players[0].x, state.players[0].y, 0, test) < 999 && 
-           getPathLen(state.players[1].x, state.players[1].y, 6, test) < 999) {
-            state.walls.push({x,y,t}); state.players[pIdx].w--; return true;
-        }
-        return false;
+    function updateTimerDisplay() {
+        [0,1].forEach(i => {
+            const p = state.players[i];
+            const display = p.time > 0 ? 
+                `${Math.floor(p.time/60)}:${(p.time%60).toString().padStart(2,'0')}` : "--:--";
+            document.getElementById('t'+i).innerText = display;
+        });
     }
 
-    function next() {
-        state.turn = 1 - state.turn; draw();
-        if(!state.over) {
-            if(state.mode === 'bot' && state.turn === 1) {
-                document.getElementById('msg').innerText = "BOT HESAPLIYOR...";
-                setTimeout(botAction, 300);
-            } else {
-                document.getElementById('msg').innerText = "SIRA " + (state.turn + 1) + ". OYUNCUDA";
-            }
-        }
-    }
-
-    function botAction() {
-        try {
-            let b = state.players[1], p = state.players[0];
-            let pD = getPathLen(p.x, p.y, 0, state.walls);
-            let bD = getPathLen(b.x, b.y, 6, state.walls);
-
-            if(state.diff !== 'easy' && b.w > 0 && (pD <= bD || p.y < 3)) {
-                if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
-            }
-
-            let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
-                let nx=b.x+m[0], ny=b.y+m[1];
-                return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
-            });
-
-            moves.sort((a, b_m) => {
-                let d1 = getPathLen(b.x+a[0], b.y+a[1], 6, state.walls);
-                let d2 = getPathLen(b.x+b_m[0], b.y+b_m[1], 6, state.walls);
-                if(state.history.length > 0) {
-                    let last = state.history[state.history.length-1];
-                    if(b.x+a[0] === last.x && b.y+a[1] === last.y) d1 += 3;
-                }
-                return d1 - d2;
-            });
-
-            if(moves.length) {
-                state.history.push({x: b.x, y: b.y});
-                if(state.history.length > 3) state.history.shift();
-                b.x += moves[0][0]; b.y += moves[0][1];
-            }
-            if(b.y === 6) end("BOT KAZANDI!"); else next();
-        } catch(e) { next(); }
-    }
-
-    function end(m) { state.over=true; document.getElementById('msg').innerText = m; draw(); }
-    setMode('bot');
-</script>
-</body>
-</html>
+    function calculateWinnerByRules(reason) {
+        clearInterval(state.timerInterval);
+        state.over = true;
+        
+        const d0 = getPathLen(state.players[0].x, state.players[0].y, 0, state.walls);
+        const d1 = getPathLen(state.players[1].x, state.players[1].y, 6, state
