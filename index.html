@@ -44,7 +44,6 @@
         .canvas-container { border: 3px solid #1a1a1a; border-radius: 15px; background: #000; position: relative; }
         canvas { display: block; touch-action: none; border-radius: 12px; }
 
-        /* MODAL TASARIMI */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000;
@@ -74,16 +73,16 @@
 
     <div id="login-screen" class="modal-overlay">
         <div class="modal-box">
-            <h1 style="font-size: 1.2rem; color: var(--orange);">PROFİL OLUŞTUR</h1>
-            <input type="text" id="user-name-input" class="neon-input" placeholder="İsim (Harf ve Sayı)" maxlength="14">
-            <div class="id-display">SİZİN ID: <span id="display-my-id" style="color:white">---</span></div>
+            <h1 style="font-size: 1.2rem;">PROFİL OLUŞTUR</h1>
+            <input type="text" id="user-name-input" class="neon-input" placeholder="İsim Yazın" maxlength="14">
+            <div class="id-display">ID'NİZ: <span id="display-my-id" style="color:white; font-weight:bold;">---</span></div>
             <button class="btn-action" onclick="savePlayerProfile()">KAYDET VE GİRİŞ YAP</button>
         </div>
     </div>
 
     <div id="room-screen" class="modal-overlay" style="display:none">
         <div class="modal-box">
-            <h1 style="font-size: 1.1rem; color: var(--orange);">ODA AYARLARI</h1>
+            <h1 style="font-size: 1.1rem;">ODA AYARLARI</h1>
             <input type="text" id="target-room-id" class="neon-input" placeholder="Oda Sahibi ID Gir">
             <label style="font-size:0.8rem; color:var(--orange)">SÜRE MODU</label>
             <select id="time-limit" class="neon-input">
@@ -99,7 +98,7 @@
 
     <div class="header">
         <h1>BARRICADE PLATINUM PLUS</h1>
-        <div id="msg">SİSTEM HAZIR</div>
+        <div id="msg">HOŞ GELDİNİZ</div>
     </div>
 
     <div class="scoreboard">
@@ -143,23 +142,20 @@
         history: [], timerInterval: null
     };
 
-    // --- PROFİL VE ID SİSTEMİ ---
+    // --- PROFİL VE ID SİSTEMİ (TAMİR EDİLDİ) ---
     function initProfile() {
-        // 1. Önce ID'yi kontrol et ve ekrana bas (İsimden bağımsız, asla değişmez)
         let myId = localStorage.getItem('barricade_id');
         if(!myId) {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             myId = '';
             for(let i=0; i<9; i++) {
                 myId += chars.charAt(Math.floor(Math.random() * chars.length));
-                // 9 haneyi bölmek için (P7X-L29-K1 gibi)
                 if((i === 2 || i === 5) && i !== 8) myId += "-";
             }
             localStorage.setItem('barricade_id', myId);
         }
         document.getElementById('display-my-id').innerText = myId;
         
-        // 2. Kayıtlı isim varsa ekranı kapat
         let savedName = localStorage.getItem('barricade_name');
         if(savedName) {
             document.getElementById('login-screen').style.display = 'none';
@@ -168,23 +164,18 @@
     }
 
     function savePlayerProfile() {
-        const inputElem = document.getElementById('user-name-input');
-        const nameValue = inputElem.value.trim();
-        
-        // Kurallar: 1-14 Karakter, Sadece harf/sayı, En az 1 harf zorunlu
-        const hasLetter = /[a-zA-ZİıĞğÜüŞşÖö]/.test(nameValue);
-        const onlyAlphanumeric = /^[a-zA-Z0-9İıĞğÜüŞşÖö]+$/.test(nameValue);
+        const input = document.getElementById('user-name-input');
+        const val = input.value.trim();
+        const hasLetter = /[a-zA-ZİıĞğÜüŞşÖö]/.test(val);
+        const onlyAlphanumeric = /^[a-zA-Z0-9İıĞğÜüŞşÖö]+$/.test(val);
 
-        if(nameValue.length >= 1 && nameValue.length <= 14 && hasLetter && onlyAlphanumeric) {
-            localStorage.setItem('barricade_name', nameValue);
+        if(val.length >= 1 && val.length <= 14 && hasLetter && onlyAlphanumeric) {
+            localStorage.setItem('barricade_name', val);
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('name-p1').innerText = nameValue.toUpperCase();
-            document.getElementById('msg').innerText = "HOŞ GELDİN, " + nameValue.toUpperCase();
+            document.getElementById('name-p1').innerText = val.toUpperCase();
+            document.getElementById('msg').innerText = "BAŞARIYLA GİRİŞ YAPILDI";
         } else {
-            if(nameValue.length < 1) alert("Lütfen bir isim girin!");
-            else if(!hasLetter) alert("İsimde en az bir harf olmalıdır!");
-            else if(!onlyAlphanumeric) alert("İsimde sembol veya boşluk kullanılamaz!");
-            else alert("İsim çok uzun (Maksimum 14 karakter)!");
+            alert("HATA: İsim 1-14 karakter olmalı, boşluk içermemeli ve en az 1 harf bulundurmalıdır!");
         }
     }
 
@@ -196,3 +187,154 @@
         const timeVal = parseInt(document.getElementById('time-limit').value);
         state.players[0].time = timeVal;
         state.players[1].time = timeVal;
+        toggleRoomModal(false);
+        reset();
+        if(timeVal > 0) startTimer();
+    }
+
+    function setMode(m) {
+        state.mode = m;
+        document.getElementById('m_bot').className = 'btn-main bot-mode' + (m==='bot'?' active':'');
+        document.getElementById('m_pvp').className = 'btn-main pvp-mode' + (m==='pvp'?' active':'');
+        document.getElementById('diff-box').style.visibility = (m === 'bot') ? 'visible' : 'hidden';
+        document.getElementById('p2-label').innerText = (m === 'pvp') ? "2. OYUNCU" : "BOT";
+        reset();
+    }
+
+    function setDiff(d) {
+        state.diff = d;
+        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+        document.getElementById('d_'+d).classList.add('active');
+        reset();
+    }
+
+    function reset() {
+        clearInterval(state.timerInterval);
+        state.players[0].x=3; state.players[0].y=6; state.players[0].w=10;
+        state.players[1].x=3; state.players[1].y=0; state.players[1].w=10;
+        state.walls=[]; state.turn=0; state.over=false; state.history=[];
+        document.getElementById('msg').innerText = "SIRA 1. OYUNCUDA";
+        updateTimerDisplay();
+        draw();
+    }
+
+    function startTimer() {
+        clearInterval(state.timerInterval);
+        state.timerInterval = setInterval(() => {
+            if(!state.over) {
+                state.players[state.turn].time--;
+                if(state.players[state.turn].time <= 0) calculateWinnerByRules("SÜRE BİTTİ!");
+                updateTimerDisplay();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        [0,1].forEach(i => {
+            const p = state.players[i];
+            document.getElementById('t'+i).innerText = p.time > 0 ? 
+                `${Math.floor(p.time/60)}:${(p.time%60).toString().padStart(2,'0')}` : "--:--";
+        });
+    }
+
+    function calculateWinnerByRules(reason) {
+        clearInterval(state.timerInterval);
+        state.over = true;
+        const d0 = getPathLen(state.players[0].x, state.players[0].y, 0, state.walls);
+        const d1 = getPathLen(state.players[1].x, state.players[1].y, 6, state.walls);
+        let winner = d0 < d1 ? "1. OYUNCU" : (d1 < d0 ? "2. OYUNCU / BOT" : "BERABERLİK");
+        document.getElementById('msg').innerText = reason + " KAZANAN: " + winner;
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,350,350);
+        ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 1;
+        for(let i=0; i<=GRID; i++) {
+            ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,350); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(350,i*CELL); ctx.stroke();
+        }
+        state.walls.forEach(w => {
+            ctx.fillStyle = '#ff8c00';
+            if(w.t === 'v') ctx.fillRect((w.x+1)*CELL-4, w.y*CELL+4, 8, CELL-8);
+            else ctx.fillRect(w.x*CELL+4, (w.y+1)*CELL-4, CELL-8, 8);
+        });
+        state.players.forEach((p, i) => {
+            ctx.beginPath(); ctx.arc(p.x*CELL+CELL/2, p.y*CELL+CELL/2, CELL*0.35, 0, Math.PI*2);
+            ctx.fillStyle = p.c; ctx.fill();
+            if(state.turn === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke(); }
+        });
+        document.getElementById('w0').innerText = state.players[0].w;
+        document.getElementById('w1').innerText = state.players[1].w;
+        document.getElementById('c0').className = state.turn===0?'card active':'card';
+        document.getElementById('c1').className = state.turn===1?'card active':'card';
+    }
+
+    function isBlocked(x1, y1, x2, y2, walls) {
+        if(x1 === x2) return walls.some(w => w.t === 'h' && w.x === x1 && w.y === Math.min(y1, y2));
+        if(y1 === y2) return walls.some(w => w.y === y1 && w.x === Math.min(x1, x2) && w.t === 'v');
+        return false;
+    }
+
+    function getPathLen(px, py, ty, walls) {
+        let q = [{x:px, y:py, d:0}], vis = new Set([px+','+py]);
+        while(q.length) {
+            let c = q.shift(); if(c.y === ty) return c.d;
+            for(let [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                let nx=c.x+dx, ny=c.y+dy;
+                if(nx>=0 && nx<GRID && ny>=0 && ny<GRID && !vis.has(nx+','+ny) && !isBlocked(c.x,c.y,nx,ny,walls)) {
+                    vis.add(nx+','+ny); q.push({x:nx, y:ny, d:c.d+1});
+                }
+            }
+        }
+        return 999;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if(state.over || (state.mode === 'bot' && state.turn === 1)) return;
+        const r = canvas.getBoundingClientRect();
+        const x = (e.clientX-r.left)*(350/r.width), y = (e.clientY-r.top)*(350/r.height);
+        const cx = Math.floor(x/CELL), cy = Math.floor(y/CELL), mx = x%CELL, my = y%CELL;
+        if(mx > CELL*0.8 && cx < 6 && placeWall(cx, cy, 'v', state.turn)) { next(); return; }
+        if(my > CELL*0.8 && cy < 6 && placeWall(cx, cy, 'h', state.turn)) { next(); return; }
+        let p = state.players[state.turn];
+        if(Math.abs(cx-p.x)+Math.abs(cy-p.y)===1 && !isBlocked(p.x,p.y,cx,cy,state.walls)) {
+            p.x=cx; p.y=cy; if(p.y === p.ty) end("KAZANDINIZ!"); else next();
+        }
+    });
+
+    function placeWall(x, y, t, pIdx) {
+        if(state.players[pIdx].w <= 0) return false;
+        if(state.walls.some(w=>w.x===x && w.y===y && w.t===t)) return false;
+        let test = [...state.walls, {x,y,t}];
+        if(getPathLen(state.players[0].x, state.players[0].y, 0, test) < 999 && 
+           getPathLen(state.players[1].x, state.players[1].y, 6, test) < 999) {
+            state.walls.push({x,y,t}); state.players[pIdx].w--; return true;
+        }
+        return false;
+    }
+
+    function next() {
+        state.turn = 1 - state.turn; draw();
+        if(!state.over && state.mode === 'bot' && state.turn === 1) setTimeout(botAction, 300);
+    }
+
+    function botAction() {
+        let b = state.players[1], p = state.players[0];
+        if(state.diff !== 'easy' && b.w > 0 && (getPathLen(p.x, p.y, 0, state.walls) <= getPathLen(b.x, b.y, 6, state.walls))) {
+            if(placeWall(p.x, p.y-1, 'h', 1)) { next(); return; }
+        }
+        let moves = [[0,1],[1,0],[-1,0],[0,-1]].filter(m => {
+            let nx=b.x+m[0], ny=b.y+m[1];
+            return nx>=0 && nx<GRID && ny>=0 && ny<GRID && !isBlocked(b.x,b.y,nx,ny,state.walls);
+        }).sort((a, b_m) => getPathLen(b.x+a[0], b.y+a[1], 6, state.walls) - getPathLen(b.x+b_m[0], b.y+b_m[1], 6, state.walls));
+        if(moves.length) { b.x += moves[0][0]; b.y += moves[0][1]; }
+        if(b.y === 6) end("BOT KAZANDI!"); else next();
+    }
+
+    function end(m) { state.over=true; clearInterval(state.timerInterval); document.getElementById('msg').innerText = m; draw(); }
+    
+    initProfile();
+    setMode('bot');
+</script>
+</body>
+</html>
