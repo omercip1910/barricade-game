@@ -74,7 +74,7 @@
 
     <div id="login-screen" class="modal-overlay">
         <div class="modal-box">
-            <h1 style="font-size: 1.2rem;">PROFİL OLUŞTUR</h1>
+            <h1 style="font-size: 1.2rem; color: var(--orange);">PROFİL OLUŞTUR</h1>
             <input type="text" id="user-name-input" class="neon-input" placeholder="İsim (Harf ve Sayı)" maxlength="14">
             <div class="id-display">SİZİN ID: <span id="display-my-id" style="color:white">---</span></div>
             <button class="btn-action" onclick="savePlayerProfile()">KAYDET VE GİRİŞ YAP</button>
@@ -83,7 +83,7 @@
 
     <div id="room-screen" class="modal-overlay" style="display:none">
         <div class="modal-box">
-            <h1 style="font-size: 1.1rem;">ODA AYARLARI</h1>
+            <h1 style="font-size: 1.1rem; color: var(--orange);">ODA AYARLARI</h1>
             <input type="text" id="target-room-id" class="neon-input" placeholder="Oda Sahibi ID Gir">
             <label style="font-size:0.8rem; color:var(--orange)">SÜRE MODU</label>
             <select id="time-limit" class="neon-input">
@@ -145,15 +145,21 @@
 
     // --- PROFİL VE ID SİSTEMİ ---
     function initProfile() {
+        // 1. Önce ID'yi kontrol et ve ekrana bas (İsimden bağımsız, asla değişmez)
         let myId = localStorage.getItem('barricade_id');
         if(!myId) {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             myId = '';
-            for(let i=0; i<9; i++) myId += chars.charAt(Math.floor(Math.random() * chars.length));
+            for(let i=0; i<9; i++) {
+                myId += chars.charAt(Math.floor(Math.random() * chars.length));
+                // 9 haneyi bölmek için (P7X-L29-K1 gibi)
+                if((i === 2 || i === 5) && i !== 8) myId += "-";
+            }
             localStorage.setItem('barricade_id', myId);
         }
         document.getElementById('display-my-id').innerText = myId;
         
+        // 2. Kayıtlı isim varsa ekranı kapat
         let savedName = localStorage.getItem('barricade_name');
         if(savedName) {
             document.getElementById('login-screen').style.display = 'none';
@@ -162,16 +168,23 @@
     }
 
     function savePlayerProfile() {
-        const input = document.getElementById('user-name-input').value;
-        const hasLetter = /[a-zA-Z]/.test(input);
-        const onlyAlphanumeric = /^[a-zA-Z0-9]+$/.test(input);
+        const inputElem = document.getElementById('user-name-input');
+        const nameValue = inputElem.value.trim();
+        
+        // Kurallar: 1-14 Karakter, Sadece harf/sayı, En az 1 harf zorunlu
+        const hasLetter = /[a-zA-ZİıĞğÜüŞşÖö]/.test(nameValue);
+        const onlyAlphanumeric = /^[a-zA-Z0-9İıĞğÜüŞşÖö]+$/.test(nameValue);
 
-        if(input.length >= 1 && input.length <= 14 && hasLetter && onlyAlphanumeric) {
-            localStorage.setItem('barricade_name', input);
+        if(nameValue.length >= 1 && nameValue.length <= 14 && hasLetter && onlyAlphanumeric) {
+            localStorage.setItem('barricade_name', nameValue);
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('name-p1').innerText = input.toUpperCase();
+            document.getElementById('name-p1').innerText = nameValue.toUpperCase();
+            document.getElementById('msg').innerText = "HOŞ GELDİN, " + nameValue.toUpperCase();
         } else {
-            alert("HATA: İsim 1-14 karakter olmalı, sadece harf/sayı içermeli ve en az 1 harf bulundurmalıdır!");
+            if(nameValue.length < 1) alert("Lütfen bir isim girin!");
+            else if(!hasLetter) alert("İsimde en az bir harf olmalıdır!");
+            else if(!onlyAlphanumeric) alert("İsimde sembol veya boşluk kullanılamaz!");
+            else alert("İsim çok uzun (Maksimum 14 karakter)!");
         }
     }
 
@@ -183,63 +196,3 @@
         const timeVal = parseInt(document.getElementById('time-limit').value);
         state.players[0].time = timeVal;
         state.players[1].time = timeVal;
-        toggleRoomModal(false);
-        reset();
-        if(timeVal > 0) startTimer();
-    }
-
-    // --- OYUN MANTIĞI ---
-    function setMode(m) {
-        state.mode = m;
-        document.getElementById('m_bot').className = 'btn-main bot-mode' + (m==='bot'?' active':'');
-        document.getElementById('m_pvp').className = 'btn-main pvp-mode' + (m==='pvp'?' active':'');
-        document.getElementById('diff-box').style.visibility = (m === 'bot') ? 'visible' : 'hidden';
-        document.getElementById('p2-label').innerText = (m === 'pvp') ? "2. OYUNCU" : "BOT";
-        reset();
-    }
-
-    function setDiff(d) {
-        state.diff = d;
-        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
-        document.getElementById('d_'+d).classList.add('active');
-        reset();
-    }
-
-    function reset() {
-        clearInterval(state.timerInterval);
-        state.players[0].x=3; state.players[0].y=6; state.players[0].w=10;
-        state.players[1].x=3; state.players[1].y=0; state.players[1].w=10;
-        state.walls=[]; state.turn=0; state.over=false; state.history=[];
-        document.getElementById('msg').innerText = "SIRA 1. OYUNCUDA";
-        updateTimerDisplay();
-        draw();
-    }
-
-    function startTimer() {
-        clearInterval(state.timerInterval);
-        state.timerInterval = setInterval(() => {
-            if(!state.over) {
-                state.players[state.turn].time--;
-                if(state.players[state.turn].time <= 0) {
-                    calculateWinnerByRules("SÜRE BİTTİ!");
-                }
-                updateTimerDisplay();
-            }
-        }, 1000);
-    }
-
-    function updateTimerDisplay() {
-        [0,1].forEach(i => {
-            const p = state.players[i];
-            const display = p.time > 0 ? 
-                `${Math.floor(p.time/60)}:${(p.time%60).toString().padStart(2,'0')}` : "--:--";
-            document.getElementById('t'+i).innerText = display;
-        });
-    }
-
-    function calculateWinnerByRules(reason) {
-        clearInterval(state.timerInterval);
-        state.over = true;
-        
-        const d0 = getPathLen(state.players[0].x, state.players[0].y, 0, state.walls);
-        const d1 = getPathLen(state.players[1].x, state.players[1].y, 6, state
